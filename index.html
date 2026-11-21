@@ -1,1 +1,2461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FRFD EMS Training Portal & CE Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    @media print {
+      .no-print { display: none !important; }
+      body {
+        background: white !important;
+        color: black !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      @page {
+        margin: 0.35in;
+      }
+      .print-card {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+      table {
+        font-size: 8px !important;
+        line-height: 1.15 !important;
+      }
+      th, td {
+        padding: 2.5px 4px !important;
+      }
+    }
+    .col-resizer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
+      user-select: none;
+      touch-action: none;
+    }
+    .col-resizer:hover,
+    .col-resizer.resizing {
+      background-color: rgba(56, 189, 248, 0.75);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col pb-20 sm:pb-0">
 
+  <!-- ==================== LOGIN GATE SCREEN ==================== -->
+  <div id="loginScreen" class="no-print min-h-screen bg-slate-900 flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+      <div class="bg-slate-950 text-white p-6 text-center border-b border-slate-800">
+        <div class="inline-block bg-red-600 text-white font-black text-xs px-3 py-1 rounded-lg tracking-widest uppercase mb-2 shadow">
+          Florence Rural Fire District
+        </div>
+        <h1 class="text-xl font-black tracking-tight">FRFD EMS Training Portal</h1>
+        <p class="text-xs text-slate-400 mt-1">Continuing Education, Rosters &amp; Transcripts</p>
+        <div id="cloudStatusBadge" class="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 text-[10px] font-bold text-emerald-400">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Connecting to Station Cloud Sync...
+        </div>
+      </div>
+
+      <!-- Role Toggle Tabs -->
+      <div class="grid grid-cols-2 bg-slate-100 p-1.5 border-b border-slate-200">
+        <button type="button" onclick="setLoginRole('officer')" id="roleBtnOfficer" class="py-2 rounded-xl text-xs font-black bg-white text-slate-900 shadow cursor-pointer transition">
+          Training Officer Login
+        </button>
+        <button type="button" onclick="setLoginRole('member')" id="roleBtnMember" class="py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer transition">
+          Crew Member Portal
+        </button>
+      </div>
+
+      <!-- Officer Login Form -->
+      <form id="officerLoginForm" onsubmit="handleOfficerLogin(event)" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Select Officer Name</label>
+          <select id="loginOfficerName" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600">
+            <option value="Jessica Burhenn, AEMT (EMS Lt.)">Jessica Burhenn, AEMT (EMS Lt.)</option>
+            <option value="Matthew Roth, Paramedic">Matthew Roth, Paramedic</option>
+            <option value="William Boswell, EMT">William Boswell, EMT</option>
+            <option value="Authorized Training Officer">Authorized Training Officer</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Officer Access PIN</label>
+          <input type="password" inputmode="numeric" id="loginOfficerPin" required placeholder="Enter Officer PIN (Default: 1911)" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-mono tracking-widest text-center focus:ring-2 focus:ring-blue-600 outline-none">
+          <p class="text-[10px] text-slate-500 mt-1 text-center">Lead Admin PIN: <strong class="font-mono text-slate-700">1911</strong> • Assistant Officer PIN: <strong class="font-mono text-slate-700">2026</strong></p>
+        </div>
+        <div id="officerLoginError" class="hidden text-xs font-bold text-red-700 bg-red-50 border border-red-200 p-2.5 rounded-lg text-center"></div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-lg text-xs uppercase tracking-wider transition cursor-pointer">
+          Sign In as Training Officer
+        </button>
+      </form>
+
+      <!-- Crew Member Login Form -->
+      <form id="memberLoginForm" onsubmit="handleMemberLogin(event)" class="hidden p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Select Your Name</label>
+          <select id="loginMemberSelect" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-600"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Personal 4-Digit Member PIN</label>
+          <input type="password" inputmode="numeric" id="loginMemberPin" required placeholder="Enter your PIN (Default: 1234)" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-mono tracking-widest text-center focus:ring-2 focus:ring-emerald-600 outline-none">
+          <p class="text-[10px] text-slate-500 mt-1 text-center">Default Member PIN is <strong class="font-mono text-slate-700">1234</strong> unless updated by your Training Officer.</p>
+        </div>
+        <div id="memberLoginError" class="hidden text-xs font-bold text-red-700 bg-red-50 border border-red-200 p-2.5 rounded-lg text-center"></div>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl shadow-lg text-xs uppercase tracking-wider transition cursor-pointer">
+          View My Transcript &amp; Submit CE
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN APP SHELL ==================== -->
+  <div id="appShell" class="hidden flex-1 flex flex-col">
+
+    <!-- Top Navigation Header (Screen Only) -->
+    <header class="no-print bg-slate-900 text-white shadow-lg sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="bg-red-600 text-white font-black text-xs px-2.5 py-1.5 rounded-lg tracking-wider shadow">FRFD EMS</div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-base sm:text-lg font-black tracking-tight leading-none">Training Portal &amp; CE Manager</h1>
+              <span id="liveSyncPill" class="bg-emerald-950 border border-emerald-500/40 text-emerald-300 text-[9px] font-bold px-2 py-0.5 rounded-full">Live Sync</span>
+            </div>
+            <p id="loggedInUserLabel" class="text-[11px] text-slate-400 mt-0.5">Signed in</p>
+          </div>
+        </div>
+
+        <!-- Officer Desktop Navigation Tabs -->
+        <nav id="officerDesktopNav" class="hidden sm:flex flex-wrap items-center gap-1 bg-slate-800 p-1 rounded-xl">
+          <button onclick="switchTab('ledger')" id="tab-ledger" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow cursor-pointer">
+            Master Ledgers
+          </button>
+          <button onclick="switchTab('add')" id="tab-add" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
+            + Add / Scan Roster
+          </button>
+          <button onclick="switchTab('approvals')" id="tab-approvals" class="admin-only-nav nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer flex items-center gap-1">
+            Approvals <span id="pendingBadgeDesktop" class="hidden bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 rounded-full">0</span>
+          </button>
+          <button onclick="switchTab('endorsements')" id="tab-endorsements" class="admin-only-nav nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
+            Endorsements
+          </button>
+          <button onclick="switchTab('transcripts')" id="tab-transcripts" class="admin-only-nav nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
+            Transcripts
+          </button>
+          <button onclick="switchTab('roster')" id="tab-roster" class="admin-only-nav nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer flex items-center gap-1">
+            Crew &amp; Alerts <span id="expiryBadgeDesktop" class="hidden bg-red-500 text-white text-[10px] font-black px-1.5 rounded-full">0</span>
+          </button>
+        </nav>
+
+        <!-- Member Desktop Navigation Tabs -->
+        <nav id="memberDesktopNav" class="hidden sm:flex flex-wrap items-center gap-1.5 bg-slate-800 p-1 rounded-xl">
+          <button onclick="switchTab('transcripts')" id="mtab-desk-transcripts" class="m-desk-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white shadow cursor-pointer">
+            My Transcript &amp; Cards
+          </button>
+          <button onclick="switchTab('memberDeptLog')" id="mtab-desk-memberDeptLog" class="m-desk-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
+            Dept Drills I Attended
+          </button>
+          <button onclick="switchTab('memberSubmit')" id="mtab-desk-memberSubmit" class="m-desk-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
+            + Submit Outside Training
+          </button>
+        </nav>
+
+        <!-- Utility Actions -->
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <button id="backupBtn" onclick="exportBackup()" title="Download JSON backup" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition cursor-pointer">
+            Backup
+          </button>
+          <label id="restoreBtn" title="Restore JSON backup" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition cursor-pointer">
+            Restore
+            <input type="file" id="restoreInput" accept=".json" class="hidden" onchange="importBackup(event)">
+          </label>
+          <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
+            <span>Print</span>
+          </button>
+          <button onclick="logout()" class="bg-slate-700 hover:bg-red-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer">
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Officer Mobile Bottom Bar -->
+    <nav id="officerMobileNav" class="no-print sm:hidden fixed bottom-0 inset-x-0 bg-slate-900 text-white border-t border-slate-700 z-40 grid grid-cols-6 gap-0.5 p-1 shadow-2xl">
+      <button onclick="switchTab('ledger')" id="mtab-ledger" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg bg-blue-600 text-white text-[9.5px] font-bold">
+        <span>Ledgers</span>
+      </button>
+      <button onclick="switchTab('add')" id="mtab-add" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9.5px] font-bold">
+        <span>+ Scan</span>
+      </button>
+      <button onclick="switchTab('approvals')" id="mtab-approvals" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9.5px] font-bold relative">
+        <span>Approve</span>
+        <span id="pendingBadgeMobile" class="hidden absolute top-0.5 right-1 bg-amber-500 text-slate-950 text-[8px] font-black px-1 rounded-full">0</span>
+      </button>
+      <button onclick="switchTab('endorsements')" id="mtab-endorsements" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9.5px] font-bold">
+        <span>Endorse</span>
+      </button>
+      <button onclick="switchTab('transcripts')" id="mtab-transcripts" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9.5px] font-bold">
+        <span>Transcript</span>
+      </button>
+      <button onclick="switchTab('roster')" id="mtab-roster" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9.5px] font-bold relative">
+        <span>Crew</span>
+        <span id="expiryBadgeMobile" class="hidden absolute top-0.5 right-1 bg-red-500 text-white text-[8px] font-black px-1 rounded-full">0</span>
+      </button>
+    </nav>
+
+    <!-- Member Mobile Bottom Bar -->
+    <nav id="memberMobileNav" class="no-print hidden sm:hidden fixed bottom-0 inset-x-0 bg-slate-900 text-white border-t border-slate-700 z-40 grid grid-cols-3 gap-1 p-1.5 shadow-2xl">
+      <button onclick="switchTab('transcripts')" id="mmtab-transcripts" class="mmnav-btn flex flex-col items-center justify-center py-2 rounded-lg bg-emerald-600 text-white text-[11px] font-bold">
+        <span>My Transcript</span>
+      </button>
+      <button onclick="switchTab('memberDeptLog')" id="mmtab-memberDeptLog" class="mmnav-btn flex flex-col items-center justify-center py-2 rounded-lg text-slate-300 text-[11px] font-bold">
+        <span>Dept Drills</span>
+      </button>
+      <button onclick="switchTab('memberSubmit')" id="mmtab-memberSubmit" class="mmnav-btn flex flex-col items-center justify-center py-2 rounded-lg text-slate-300 text-[11px] font-bold">
+        <span>+ Submit CE</span>
+      </button>
+    </nav>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 print:p-0">
+
+      <!-- GLOBAL OFFICER EXPIRATION ALERT BANNER (SCREEN ONLY) -->
+      <div id="officerGlobalAlertBanner" class="no-print hidden mb-4 bg-red-50 border-2 border-red-400 rounded-xl p-3.5 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-start gap-2.5">
+          <span class="bg-red-600 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded mt-0.5 shrink-0">Expiration Alert</span>
+          <div id="officerGlobalAlertText" class="text-xs text-red-950 font-medium"></div>
+        </div>
+        <button onclick="switchTab('roster')" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs cursor-pointer shrink-0">
+          Review Expirations &rarr;
+        </button>
+      </div>
+
+      <!-- ==================== VIEW 1: MASTER LEDGERS ==================== -->
+      <section id="view-ledger" class="space-y-4">
+        <div class="no-print bg-white border border-slate-300 rounded-xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-extrabold uppercase text-slate-500 mr-1">Ledger Year:</span>
+            <button onclick="setLedgerYear('2026')" id="yr-2026" class="yr-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white cursor-pointer">2026 Ledger (19)</button>
+            <button onclick="setLedgerYear('2025')" id="yr-2025" class="yr-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">2025 Ledger (22)</button>
+            <button onclick="setLedgerYear('all')" id="yr-all" class="yr-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">All Sessions (41)</button>
+            <label id="privateLedgerToggleWrap" class="inline-flex items-center gap-1.5 ml-2 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-300 px-2.5 py-1 rounded-lg cursor-pointer">
+              <input type="checkbox" id="showPrivateOnLedger" checked onchange="renderLedger()" class="rounded text-blue-600">
+              <span id="privateToggleLabel">Show Private Individual CE (5)</span>
+            </label>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <input type="text" id="ledgerSearch" oninput="renderLedger()" placeholder="Search topic, instructor, or member..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-56 focus:ring-2 focus:ring-blue-500 outline-none">
+            <button onclick="switchTab('add')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs shadow cursor-pointer">
+              + Add New Training
+            </button>
+          </div>
+        </div>
+
+        <div class="print-card bg-white border border-slate-300 rounded-xl p-5 shadow-sm">
+          <div class="border-b-2 border-slate-900 pb-2 mb-3 flex justify-between items-end">
+            <div>
+              <div class="text-[9px] font-black uppercase tracking-widest text-blue-900">Florence Rural Fire District • EMS Training Division</div>
+              <h2 id="ledgerHeading" class="text-lg font-black uppercase text-slate-900 leading-tight">2026 Verified EMS Continuing Education Master Ledger</h2>
+              <p class="text-[9.5px] text-slate-600">Click any course title or topic description to copy directly for NREMT entry • Pre-licensure dates automatically excluded.</p>
+            </div>
+            <div class="text-right border border-slate-300 px-2.5 py-1 rounded bg-slate-50 text-[8.5px]">
+              <div class="font-bold text-slate-700 uppercase">Active View Summary:</div>
+              <div id="ledgerStats" class="font-mono font-bold text-blue-900">19 Sessions • 50.25 Hours</div>
+            </div>
+          </div>
+
+          <!-- Explicit Save / Submit Ledger Edits Bar -->
+          <div id="ledgerSaveBar" class="no-print mb-3 bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2">
+              <span id="ledgerUnsavedBadge" class="bg-emerald-100 text-emerald-950 border border-emerald-300 px-2 py-0.5 rounded text-[10px] font-black uppercase">Synced</span>
+              <span id="ledgerSaveStatusText" class="text-[11px] text-slate-600">Endorsements, NREMT tags &amp; dates auto-save—click <strong>Save / Submit Changes</strong> anytime to force-sync to the cloud.</span>
+            </div>
+            <button type="button" onclick="submitLedgerChanges()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-3.5 py-1.5 rounded-lg shadow text-xs cursor-pointer transition">
+              Save / Submit Changes
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse border border-slate-300 text-[9px]">
+              <thead class="bg-slate-900 text-white font-bold text-[8px] uppercase tracking-wider">
+                <tr class="divide-x divide-slate-700">
+                  <th class="py-1.5 px-1.5 text-center w-7">#</th>
+                  <th class="py-1.5 px-1.5 w-16">Date</th>
+                  <th class="py-1.5 px-1 text-center w-11">Hrs</th>
+                  <th class="py-1.5 px-2 w-60">Course Title for NREMT (Click to Copy)</th>
+                  <th class="py-1.5 px-2 w-56">Topic Description &amp; Exact NREMT Assign Boxes</th>
+                  <th class="py-1.5 px-1.5 w-24">Instructor(s)</th>
+                  <th class="py-1.5 px-2">Post-Licensure Eligible Providers &amp; NREMT Credit Status</th>
+                  <th id="ledgerEditHeader" class="no-print py-1.5 px-1.5 text-center w-12">Edit</th>
+                </tr>
+              </thead>
+              <tbody id="ledgerTableBody" class="divide-y divide-slate-200 text-slate-800"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 2: ADD / SCAN ROSTER ==================== -->
+      <section id="view-add" class="hidden space-y-4">
+        <div class="bg-white border border-slate-300 rounded-xl p-6 shadow-sm max-w-4xl mx-auto">
+          <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-200 pb-4 mb-5">
+            <div>
+              <span id="formBadge" class="bg-blue-100 text-blue-900 text-[10px] font-black uppercase px-2 py-0.5 rounded">New Training Session</span>
+              <h2 id="formHeading" class="text-xl font-black text-slate-900 mt-1">Log New EMS Drill / Roster</h2>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow cursor-pointer flex items-center gap-1.5 transition">
+                <span id="scanBtnText">Snap / Upload Roster Photo</span>
+                <input type="file" id="rosterPhotoInput" accept="image/*" capture="environment" class="hidden" onchange="scanRosterPhoto(event)">
+              </label>
+              <button type="button" onclick="resetForm()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-xl text-xs cursor-pointer">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <form id="sessionForm" onsubmit="saveSession(event)" class="space-y-4 text-xs">
+            <input type="hidden" id="editSessionId">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Training Date *</label>
+                <input type="date" id="fDate" required onchange="refreshAttendeePreview()" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Total Hours *</label>
+                <input type="number" step="0.25" min="0.25" id="fHours" required oninput="updateDomainSum()" placeholder="e.g. 2.0" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Source / Reporting</label>
+                <select id="fSource" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 bg-slate-50 font-semibold">
+                  <option value="In-House / State EMS">In-House / State EMS</option>
+                  <option value="Paper Scan">Paper Scan</option>
+                  <option value="Standardized Course">Standardized Course</option>
+                  <option value="CAPCE">CAPCE (Auto-Reported)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Training Type</label>
+                <select id="fTrainingScope" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 bg-slate-50 font-semibold">
+                  <option value="department">Department-Wide Drill</option>
+                  <option value="independent">Independent / Private CE</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Course Title for NREMT *</label>
+                <input type="text" id="fTitle" required placeholder="e.g. Airway Management & Supraglottic Skills" class="w-full border border-slate-300 rounded-lg px-3 py-2">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Instructor(s) *</label>
+                <input type="text" id="fInstructor" required placeholder="e.g. Roth, Matthew" class="w-full border border-slate-300 rounded-lg px-3 py-2">
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Clinical Topic / NREMT Description *</label>
+              <input type="text" id="fDesc" required placeholder="e.g. Airway Adjuncts, Ventilation & Oxygenation" class="w-full border border-slate-300 rounded-lg px-3 py-2">
+            </div>
+
+            <div class="bg-slate-50 border border-slate-300 rounded-xl p-3.5 space-y-2.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="font-black text-slate-800 uppercase text-[11px]">NREMT NCCP Domain Hours</span>
+                  <button type="button" onclick="autoClassifyDomains()" class="bg-blue-100 hover:bg-blue-200 text-blue-950 border border-blue-300 font-bold px-2.5 py-1 rounded-lg text-[10.5px] cursor-pointer">
+                    Auto-Classify from Title
+                  </button>
+                </div>
+                <span id="domainSumStatus" class="text-xs font-mono font-bold text-amber-700">Assigned: 0.00 / 0.00 hrs</span>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <div>
+                  <label class="block text-[10px] font-bold text-sky-900 mb-0.5">Airway</label>
+                  <input type="number" step="0.25" min="0" id="dAirway" value="0" oninput="updateDomainSum()" class="w-full border border-slate-300 rounded px-2 py-1 font-mono bg-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-red-900 mb-0.5">Cardiology</label>
+                  <input type="number" step="0.25" min="0" id="dCardio" value="0" oninput="updateDomainSum()" class="w-full border border-slate-300 rounded px-2 py-1 font-mono bg-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-amber-900 mb-0.5">Trauma</label>
+                  <input type="number" step="0.25" min="0" id="dTrauma" value="0" oninput="updateDomainSum()" class="w-full border border-slate-300 rounded px-2 py-1 font-mono bg-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-purple-900 mb-0.5">Medical</label>
+                  <input type="number" step="0.25" min="0" id="dMedical" value="0" oninput="updateDomainSum()" class="w-full border border-slate-300 rounded px-2 py-1 font-mono bg-white">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-emerald-900 mb-0.5">Operations</label>
+                  <input type="number" step="0.25" min="0" id="dOps" value="0" oninput="updateDomainSum()" class="w-full border border-slate-300 rounded px-2 py-1 font-mono bg-white">
+                </div>
+              </div>
+
+              <div id="emtOpsCapWarning" class="hidden text-[11px] font-semibold text-amber-950 bg-amber-50 border border-amber-300 rounded-lg px-2.5 py-1.5">
+                Note: NREMT caps EMT National Continued Competency Operations hours at 2.0 hrs—any additional hours apply toward Local/State or Individual/Elective requirements.
+              </div>
+
+              <label class="inline-flex items-center gap-2 font-bold text-amber-950 pt-1 cursor-pointer">
+                <input type="checkbox" id="fPeds" class="rounded text-amber-600">
+                <span>Includes Pediatric Content (P)</span>
+              </label>
+            </div>
+
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <label class="font-bold text-slate-700">Roster Attendance (Pre-Licensure Dates Automatically Flagged)</label>
+                <div class="flex gap-2 text-[11px]">
+                  <button type="button" onclick="toggleAllAttendees(true)" class="text-blue-700 font-bold hover:underline cursor-pointer">Select All</button>
+                  <button type="button" onclick="toggleAllAttendees(false)" class="text-slate-600 font-bold hover:underline cursor-pointer">Clear All</button>
+                </div>
+              </div>
+              <div id="attendeeCheckboxGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"></div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-200">
+              <button type="button" onclick="switchTab('ledger')" class="px-4 py-2 rounded-xl border border-slate-300 font-bold text-slate-700 cursor-pointer">Cancel</button>
+              <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black shadow cursor-pointer">Save &amp; Sync Roster</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 3: APPROVALS QUEUE ==================== -->
+      <section id="view-approvals" class="hidden space-y-4">
+        <div class="bg-white border border-slate-300 rounded-xl p-5 shadow-sm">
+          <h2 class="text-lg font-black text-slate-900 mb-1">Member Outside Training Approvals</h2>
+          <p class="text-xs text-slate-600 mb-4">Review attached roster/certificate proof, verify NREMT categories, and approve or decline member submissions.</p>
+          <div id="approvalQueueContainer" class="space-y-3"></div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 4: MONTANA ENDORSEMENTS ==================== -->
+      <section id="view-endorsements" class="hidden space-y-4">
+        <div class="bg-white border border-slate-300 rounded-xl p-5 shadow-sm">
+          <div class="mb-3">
+            <h2 class="text-lg font-black text-slate-900">Montana EMT / ECP Endorsement Sign-Off Tracker</h2>
+            <p class="text-xs text-slate-600">Click any status pill to cycle stages (<span class="font-semibold">Not Started &rarr; In-House Practice &rarr; Field Starts &rarr; Signed Off &rarr; N/A</span>) and track IV practice/field counts or notes.</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse border border-slate-300 text-[9.5px]">
+              <thead class="bg-slate-900 text-white font-bold text-[8px] uppercase tracking-wider">
+                <tr class="divide-x divide-slate-700">
+                  <th class="py-2 px-2.5">Provider Name</th>
+                  <th class="py-1.5 px-1.5 text-center w-16">Level</th>
+                  <th class="py-2 px-2 text-center">Airway</th>
+                  <th class="py-2 px-2 text-center">Endorsed Meds</th>
+                  <th class="py-2 px-2 text-center">IV / IO Access</th>
+                  <th class="py-2 px-2 text-center">12-Lead Monitor</th>
+                  <th class="py-2 px-2 w-56">Officer Notes</th>
+                </tr>
+              </thead>
+              <tbody id="endorsementsTableBody" class="divide-y divide-slate-200 text-slate-900"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 5: MEMBER SUBMIT OUTSIDE CE ==================== -->
+      <section id="view-memberSubmit" class="hidden space-y-4 max-w-3xl mx-auto">
+        <div class="bg-white border border-slate-300 rounded-xl p-5 shadow-sm">
+          <h2 class="text-lg font-black text-slate-900 mb-1">Submit Outside or Independent Training</h2>
+          <p class="text-xs text-slate-600 mb-4">Attach a photo of your sign-in roster or completion certificate for Training Officer approval.</p>
+          <form onsubmit="submitMemberTraining(event)" class="space-y-3 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Course Date *</label>
+                <input type="date" id="msDate" required class="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Hours *</label>
+                <input type="number" step="0.25" min="0.25" id="msHours" required placeholder="e.g. 2.0" class="w-full border border-slate-300 rounded-lg px-3 py-2 font-mono">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Training Type</label>
+                <select id="msScope" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 bg-slate-50 font-semibold">
+                  <option value="independent">Independent / Private Course</option>
+                  <option value="department">Department-Wide Drill</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Course / Training Title *</label>
+              <input type="text" id="msTitle" required oninput="updateMemberDomainHint()" placeholder="e.g. Supraglottic Airway & CPAP Refresher" class="w-full border border-slate-300 rounded-lg px-3 py-2">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">NREMT Category *</label>
+                <select id="msDomain" onchange="updateMemberDomainHint()" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 bg-slate-50 font-semibold">
+                  <option value="airway">Airway</option>
+                  <option value="cardio">Cardiology</option>
+                  <option value="trauma">Trauma</option>
+                  <option value="medical">Medical</option>
+                  <option value="ops">EMS Operations</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Instructor / Sponsor *</label>
+                <input type="text" id="msInstructor" required placeholder="e.g. CAPCE / AHA / Hospital" class="w-full border border-slate-300 rounded-lg px-3 py-2">
+              </div>
+            </div>
+
+            <div id="msDomainSuggestionBox" class="hidden bg-amber-50 border border-amber-300 text-amber-950 rounded-lg px-3 py-2 text-[11px]"></div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Roster Photo or Certificate Proof *</label>
+              <input type="file" id="msProofFile" accept="image/*" required onchange="previewMemberProof(event)" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-xs">
+              <div id="msProofPreviewWrap" class="hidden mt-2">
+                <img id="msProofPreviewImg" src="" alt="Proof preview" class="max-h-40 rounded-lg border border-slate-300">
+              </div>
+            </div>
+
+            <label class="inline-flex items-center gap-2 font-bold text-amber-950 cursor-pointer">
+              <input type="checkbox" id="msPeds" class="rounded text-amber-600">
+              <span>Pediatric Topic (P)</span>
+            </label>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Notes (Optional)</label>
+              <input type="text" id="msNotes" placeholder="Any extra details for your Training Officer..." class="w-full border border-slate-300 rounded-lg px-3 py-2">
+            </div>
+
+            <button type="submit" id="msSubmitBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded-xl shadow cursor-pointer">
+              Send with Proof to Training Officer for Approval
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-white border border-slate-300 rounded-xl p-5 shadow-sm">
+          <h3 class="text-sm font-black text-slate-900 mb-3">My Submitted Requests</h3>
+          <div id="memberSubmissionHistory" class="space-y-2 text-xs"></div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 6: MEMBER DEPT DRILLS LOG ==================== -->
+      <section id="view-memberDeptLog" class="hidden space-y-4">
+        <div class="bg-white border border-slate-300 rounded-xl p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-3">
+            <div>
+              <h2 class="text-lg font-black text-slate-900">Department Trainings I Attended</h2>
+              <p class="text-xs text-slate-600">Shows only department-wide drills where your attendance is recorded.</p>
+            </div>
+            <span id="memberDeptStats" class="bg-blue-50 border border-blue-200 text-blue-950 font-mono font-bold text-xs px-3 py-1 rounded-lg">0 Dept Drills Attended</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse border border-slate-300 text-[9.5px]">
+              <thead class="bg-slate-900 text-white font-bold text-[8px] uppercase tracking-wider">
+                <tr class="divide-x divide-slate-700">
+                  <th class="py-1.5 px-2 w-20">Date</th>
+                  <th class="py-1.5 px-2">Training / Drill Title</th>
+                  <th class="py-1.5 px-2">Domains</th>
+                  <th class="py-1.5 px-2 w-32">Instructor(s)</th>
+                  <th class="py-1.5 px-1.5 text-center w-14">Hours</th>
+                </tr>
+              </thead>
+              <tbody id="memberDeptLogBody" class="divide-y divide-slate-200 text-slate-900"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 7: TRANSCRIPTS & MEMBER CARDS ==================== -->
+      <section id="view-transcripts" class="hidden space-y-4">
+        <div id="memberSelfServicePanel" class="no-print hidden space-y-3">
+          <div id="memberAlertBanner" class="hidden"></div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onsubmit="saveMemberOwnDates(event)" class="bg-white border border-slate-300 rounded-xl p-4 shadow-sm space-y-3 text-xs">
+              <h3 class="font-black text-slate-900 text-sm">Update My BLS Card &amp; Recert Dates</h3>
+              <p class="text-[11px] text-slate-600">Keep your BLS CPR expiration and NREMT/State renewal dates current to receive automatic alerts.</p>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">BLS CPR Expiration</label>
+                  <input type="date" id="myBlsExpInput" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">NREMT / State Due Date</label>
+                  <input type="date" id="myRecertExpInput" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono">
+                </div>
+              </div>
+              <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-lg cursor-pointer">
+                Save My Card Dates
+              </button>
+            </form>
+
+            <div class="bg-white border border-slate-300 rounded-xl p-4 shadow-sm space-y-2 text-xs">
+              <h3 class="font-black text-slate-900 text-sm">My Montana Endorsement Status</h3>
+              <div id="myEndorsementsSummary" class="space-y-1.5"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="no-print bg-white border border-slate-300 rounded-xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div id="transcriptMemberPickerWrap" class="flex flex-wrap items-center gap-2">
+            <label for="transcriptMemberSelect" class="text-xs font-bold text-slate-700">Provider:</label>
+            <select id="transcriptMemberSelect" onchange="renderTranscript()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold bg-slate-50"></select>
+          </div>
+          <div class="flex items-center gap-2">
+            <label for="transcriptYearSelect" class="text-xs font-bold text-slate-700">Period:</label>
+            <select id="transcriptYearSelect" onchange="renderTranscript()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-bold bg-slate-50">
+              <option value="all">All Post-Licensure Hours</option>
+              <option value="2026">2026 Only</option>
+              <option value="2025">2025 Only</option>
+            </select>
+            <button type="button" onclick="resetTranscriptColumnWidths()" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg text-xs cursor-pointer">
+              Reset Columns
+            </button>
+            <button type="button" onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs cursor-pointer">
+              Print Transcript
+            </button>
+          </div>
+        </div>
+
+        <div id="transcriptOutput"></div>
+      </section>
+
+      <!-- ==================== VIEW 8: CREW ROSTER, ALERTS & ACCESS ==================== -->
+      <section id="view-roster" class="hidden space-y-4">
+        <div class="bg-white border border-slate-300 rounded-xl p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 mb-4">
+            <div>
+              <h2 class="text-lg font-black text-slate-900">Crew Roster, Expiration Alerts &amp; Access PINs</h2>
+              <p class="text-xs text-slate-600">Manage responder hours, BLS/Recert dates, individual login PINs, and Officer access PINs.</p>
+            </div>
+            <button type="button" onclick="openNewMemberModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs shadow cursor-pointer">
+              + Add Crew Member
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs">
+            <div class="space-y-2">
+              <div class="font-black text-slate-900 uppercase text-[10px]">Officer PIN Configuration</div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-0.5">Lead Admin PIN</label>
+                  <input type="text" id="officerPinSettingInput" maxlength="6" class="w-full border border-slate-300 rounded px-2.5 py-1 font-mono bg-white">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-0.5">Assistant Officer PIN</label>
+                  <input type="text" id="assistantPinSettingInput" maxlength="6" class="w-full border border-slate-300 rounded px-2.5 py-1 font-mono bg-white">
+                </div>
+              </div>
+              <button type="button" onclick="updateOfficerPin()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] cursor-pointer">
+                Save Officer PINs
+              </button>
+            </div>
+
+            <div class="space-y-2">
+              <div class="font-black text-slate-900 uppercase text-[10px]">Portal Health &amp; Diagnostics</div>
+              <p id="healthCheckSummary" class="text-[11px] text-slate-600">Run a quick check to verify member fields, domains, and local/cloud integrity.</p>
+              <button type="button" onclick="runSelfCheck()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] cursor-pointer">
+                Run Health Check
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse border border-slate-300 text-[9.5px]">
+              <thead class="bg-slate-900 text-white font-bold text-[8px] uppercase tracking-wider">
+                <tr class="divide-x divide-slate-700">
+                  <th class="py-2 px-2.5">Provider Name</th>
+                  <th class="py-1.5 px-1.5 text-center w-14">Level</th>
+                  <th class="py-1.5 px-2 text-center w-24">NREMT Reg #</th>
+                  <th class="py-1.5 px-2 text-center w-24">CE Start Date</th>
+                  <th class="py-1.5 px-1.5 text-center w-14">2025 Hrs</th>
+                  <th class="py-1.5 px-1.5 text-center w-14">2026 Hrs</th>
+                  <th class="py-1.5 px-1.5 text-center w-16 bg-blue-950">Total Hrs</th>
+                  <th class="py-1.5 px-2 text-center w-28">BLS Card Exp</th>
+                  <th class="py-1.5 px-2 text-center w-28">Recert Due</th>
+                  <th class="no-print py-1.5 px-1.5 text-center w-20">Member PIN</th>
+                </tr>
+              </thead>
+              <tbody id="crewSummaryBody" class="divide-y divide-slate-200 text-slate-900 text-[9px]"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Add Crew Member Modal -->
+  <div id="memberModal" class="no-print hidden fixed inset-0 bg-slate-950/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-300 space-y-3 text-xs">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+        <h3 class="font-black text-slate-900 text-sm">Add Crew Member to FRFD Roster</h3>
+        <button type="button" onclick="closeNewMemberModal()" class="text-slate-500 hover:text-slate-900 font-bold cursor-pointer">✕</button>
+      </div>
+      <form onsubmit="saveNewMember(event)" class="space-y-3">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Full Name (Last, First) *</label>
+          <input type="text" id="mName" required placeholder="e.g. Smith, Jordan" class="w-full border border-slate-300 rounded-lg px-3 py-1.5">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Cert Level *</label>
+            <select id="mLevel" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-slate-50 font-semibold">
+              <option value="EMT">EMT</option>
+              <option value="AEMT">AEMT</option>
+              <option value="Paramedic">Paramedic</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">NREMT Reg #</label>
+            <input type="text" id="mReg" placeholder="e.g. E4000000" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">CE Cutoff Date *</label>
+            <input type="date" id="mCutoff" required value="2026-01-01" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Recert Due *</label>
+            <input type="text" id="mRecert" required value="03/31/2028" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Personal Login PIN</label>
+          <input type="text" id="mPin" value="1234" maxlength="6" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeNewMemberModal()" class="px-3.5 py-1.5 rounded-lg border border-slate-300 font-bold text-slate-700 cursor-pointer">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black cursor-pointer">Save Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="no-print fixed bottom-20 sm:bottom-6 right-6 bg-slate-900 text-white px-4 py-2 rounded-xl shadow-2xl text-xs font-bold transition duration-300 opacity-0 pointer-events-none z-50">
+    Saved!
+  </div>
+
+  <script>
+    // ==================== STATE, STORAGE & ROLE MANAGEMENT ====================
+    const STORAGE_KEY = 'frfd_ems_portal_live';
+    const CLOUD_DOC_ID = 'frfd_portal_state/live_data';
+    const LEGACY_KEYS = ['frfd_ems_portal_v3', 'frfd_ems_portal_v2', 'frfd_ems_portal_v1'];
+
+    let officerPin = '1911';
+    let assistantOfficerPin = '2026';
+    let currentUser = null;
+    let activeLedgerYear = '2026';
+    let pendingProofDataUrl = '';
+    let expandedExpiryAlert = false;
+
+    const ENDORSEMENT_STAGES = ['Not Started', 'In-House Practice', 'Field Starts', 'Signed Off', 'N/A'];
+
+    // Default FRFD EMS Crew Roster (17 members)
+    const DEFAULT_MEMBERS = [
+      { id: 'boswell', name: 'Boswell, William', displayName: 'Boswell, William N', level: 'EMT', regNum: 'E3865137', emsId: '9947-9913-4291', cutoff: '2024-09-05', cycle: '09/05/2024 – 03/31/2027', recertDue: '2027-03-31', blsExp: '2027-02-19', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'In-House Practice', meds: 'In-House Practice', iv: 'In-House Practice', monitor: 'N/A', ivPractice: 0, ivField: 0, notes: '' } },
+      { id: 'burhenn', name: 'Burhenn, Jessica', displayName: 'Burhenn, Jessica', level: 'AEMT', regNum: 'A2048067', emsId: '7767-0085-0484', cutoff: '2025-03-22', cycle: '03/22/2025 – 03/31/2027', recertDue: '2027-03-31', blsExp: '2027-08-31', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'AEMT Scope', meds: 'AEMT Scope', iv: 'AEMT Scope', monitor: 'AEMT Scope', ivPractice: 5, ivField: 5, notes: 'AEMT Scope / EMS Training Officer' } },
+      { id: 'posey', name: 'Posey, Brian', displayName: 'Posey, Brian S', level: 'EMT', regNum: 'E3892731', emsId: '5040-6057-2553', cutoff: '2025-01-13', cycle: '01/13/2025 – 03/31/2027', recertDue: '2027-03-31', blsExp: '2027-02-19', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'In-House Practice', meds: 'In-House Practice', iv: 'In-House Practice', monitor: 'N/A', ivPractice: 0, ivField: 0, notes: '' } },
+      { id: 'roth_m', name: 'Roth, Matthew', displayName: 'Roth, Matthew S', level: 'Paramedic', regNum: 'M5151245', emsId: '2272-5217-0028', cutoff: '2024-12-05', cycle: '12/05/2024 – 03/31/2027', recertDue: '2027-03-31', blsExp: '2027-02-19', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'ALS Scope', meds: 'ALS Scope', iv: 'ALS Scope', monitor: 'ALS Scope', ivPractice: 5, ivField: 5, notes: 'ALS Paramedic Scope' } },
+      { id: 'arthur', name: 'Arthur, Nikki', displayName: 'Arthur, Nikki L', level: 'EMT', regNum: 'E3918015', emsId: '6624-4334-2059', cutoff: '2025-05-21', cycle: '10/16/2026 – 03/31/2029', recertDue: '2029-03-31', blsExp: '2027-02-19', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'In-House Practice', meds: 'In-House Practice', iv: 'In-House Practice', monitor: 'N/A', ivPractice: 0, ivField: 0, notes: '' } },
+      { id: 'ashford', name: 'Ashford, William', displayName: 'Ashford, William E', level: 'Paramedic', regNum: 'M5185785', emsId: '4342-1868-4777', cutoff: '2025-01-01', cycle: '12/09/2025 – 03/31/2028', recertDue: '2028-03-31', blsExp: '2027-02-19', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'ALS Scope', meds: 'ALS Scope', iv: 'ALS Scope', monitor: 'ALS Scope', ivPractice: 5, ivField: 5, notes: 'Prior EMT + ALS Paramedic Scope (All attended trainings eligible)' } },
+      { id: 'beeler', name: 'Beeler, Catherine', displayName: 'Beeler, Catherine M', level: 'EMT', regNum: 'E4202996', emsId: '4916-0639-5780', cutoff: '2026-05-19', cycle: '05/19/2026 – 03/31/2028', recertDue: '2028-03-31', blsExp: '2028-05-31', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'In-House Practice', meds: 'In-House Practice', iv: 'In-House Practice', monitor: 'N/A', ivPractice: 0, ivField: 0, notes: '' } },
+      { id: 'fisher', name: 'Fisher, Cale', displayName: 'Fisher, Cale', level: 'EMT', regNum: 'E3531548', emsId: '6811-8416-5430', cutoff: '2025-01-01', cycle: '02/08/2026 – 03/31/2028', recertDue: '2028-03-31', blsExp: '2027-02-28', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'In-House Practice', meds: 'In-House Practice', iv: 'In-House Practice', monitor: 'N/A', ivPractice: 0, ivField: 0, notes: '' } },
+      { id: 'mcmurray', name: 'McMurray, Kyra', displayName: 'McMurray, Kyra S', level: 'EMT', regNum: 'Pending Affiliation', emsId: 'ECP-EMT-LIC-160739', cutoff: '2025-06-27', cycle: '06/27/2025 – 03/31/2027', recertDue: '2027-03-31', blsExp: '2027-06-30', portalStatus: 'Add Affiliation', pin: '1234', endorsements: { airway: 'In-House Practice', meds: 'In-House Practice', iv: 'In-House Practice', monitor: 'N/A', ivPractice: 0, ivField: 0, notes: 'Pending NREMT affiliation under FRFD' } },
+      { id: 'metzger', name: 'Metzger, Peter', displayName: 'Metzger, Peter E', level: 'EMT', regNum: 'E4181428', emsId: '1255-8696-7886', cutoff: '2026-04-25', cycle: '04/25/2026 – 03/31/2028', recertDue: '2028-03-31', blsExp: '2028-04-30', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'In-House Practice', meds: 'In-House Practice', iv: 'In-House Practice', monitor: 'N/A', ivPractice: 0, ivField: 0, notes: '' } },
+      { id: 'pope', name: 'Pope, Tony', displayName: 'Pope Jr, David A ("Tony")', level: 'Paramedic', regNum: 'M0951466', emsId: '6518-0670-1266', cutoff: '2026-01-01', cycle: '10/17/2026 – 03/31/2029', recertDue: '2029-03-31', blsExp: '2027-10-31', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'ALS Scope', meds: 'ALS Scope', iv: 'ALS Scope', monitor: 'ALS Scope', ivPractice: 5, ivField: 5, notes: 'ALS Paramedic Scope' } },
+      { id: 'roth_r', name: 'Roth, Ryan', displayName: 'Roth, Ryan R', level: 'EMT', regNum: 'E4181741', emsId: '8321-1684-6783', cutoff: '2026-05-19', cycle: '05/19/2026 – 03/31/2028', recertDue: '2028-03-31', blsExp: '2028-05-31', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'In-House Practice', meds: 'In-House Practice', iv: 'In-House Practice', monitor: 'N/A', ivPractice: 0, ivField: 0, notes: '' } },
+      { id: 'skrutvold', name: 'Skrutvold, Brennan', displayName: 'Skrutvold, Brennan C', level: 'EMT', regNum: 'E3761602', emsId: '3605-3307-7709', cutoff: '2025-02-26', cycle: '02/26/2025 – 03/31/2027', recertDue: '2027-03-31', blsExp: '2026-12-31', portalStatus: 'NREMT Inactive', pin: '1234', endorsements: { airway: 'In-House Practice', meds: 'In-House Practice', iv: 'N/A', monitor: 'N/A', ivPractice: 0, ivField: 0, notes: 'IV/IO marked N/A for Brennan' } },
+      { id: 'watts', name: 'Watts, Brian', displayName: 'Watts, Brian F', level: 'EMT', regNum: 'E4162967', emsId: '6753-0428-9209', cutoff: '2026-04-09', cycle: '04/09/2026 – 03/31/2028', recertDue: '2028-03-31', blsExp: '2028-04-30', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'In-House Practice', meds: 'In-House Practice', iv: 'In-House Practice', monitor: 'N/A', ivPractice: 0, ivField: 0, notes: '' } },
+      { id: 'wick_b', name: 'Wick, Bekah', displayName: 'Wick, Bekah', level: 'EMT', regNum: 'MT State ECP', emsId: 'MT-BOME-ONLY', cutoff: '2025-01-01', cycle: '01/01/2025 – 03/31/2027', recertDue: '2027-03-31', blsExp: '2027-01-31', portalStatus: 'MT State', pin: '1234', endorsements: { airway: 'In-House Practice', meds: 'In-House Practice', iv: 'In-House Practice', monitor: 'N/A', ivPractice: 0, ivField: 0, notes: 'Montana State ECP License Only' } },
+      { id: 'wick_d', name: 'Wick, Dylan', displayName: 'Wick, Dylan H', level: 'Paramedic', regNum: 'M8066991', emsId: '5253-4144-0601', cutoff: '2025-01-01', cycle: '02/05/2026 – 03/31/2028', recertDue: '2028-03-31', blsExp: '2027-02-19', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'ALS Scope', meds: 'ALS Scope', iv: 'ALS Scope', monitor: 'ALS Scope', ivPractice: 5, ivField: 5, notes: 'ALS Paramedic Scope' } },
+      { id: 'wick_r', name: 'Wick, Rachel', displayName: 'Wick, Rachel C', level: 'Paramedic', regNum: 'M5079557', emsId: '3714-0024-4742', cutoff: '2025-01-01', cycle: '03/14/2026 – 03/31/2028', recertDue: '2028-03-31', blsExp: '2027-02-19', portalStatus: 'Affiliated', pin: '1234', endorsements: { airway: 'ALS Scope', meds: 'ALS Scope', iv: 'ALS Scope', monitor: 'ALS Scope', ivPractice: 5, ivField: 5, notes: 'ALS Paramedic Scope' } }
+    ];
+
+    // Default 41 Verified Sessions (22 in 2025 + 19 in 2026)
+    const DEFAULT_SESSIONS = [
+      { id: '25-01', date: '2025-04-12', hours: 16.0, title: 'PHTLS (Prehospital Trauma Life Support) – SIM-MT', desc: 'SIM-MT High-Fidelity Trauma Simulation', source: 'CAPCE', scope: 'department', peds: false, instructors: 'SIM-MT Faculty', attendees: ['Boswell, William', 'Burhenn, Jessica', 'Posey, Brian', 'Roth, Matthew'], domains: { airway: 3.0, cardio: 2.0, trauma: 8.0, medical: 1.5, ops: 1.5 }, nremtUploaded: true, nremtBy: 'CAPCE Auto', heldAttendees: [] },
+      { id: '25-02', date: '2025-04-17', hours: 1.0, title: 'EMS Med Bag Familiarization & Equipment Staging', desc: 'EMS Equipment Staging & Bag Layout', source: 'In-House / State EMS', scope: 'independent', peds: false, instructors: 'Burhenn, Jessica', attendees: ['Burhenn, Jessica'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 1.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-03', date: '2025-04-17', hours: 2.5, title: 'Field Triage & MCI Incident Management', desc: 'Field Triage & Mass Casualty Management', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Roth, Matthew', attendees: ['Boswell, William', 'Burhenn, Jessica', 'Posey, Brian', 'Roth, Matthew', 'Wick, Dylan'], domains: { airway: 0, cardio: 0, trauma: 2.5, medical: 0, ops: 0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-04', date: '2025-04-24', hours: 0.5, title: 'First Aid & Basic Trauma Care Refresher', desc: 'Basic Trauma Care & Bleeding Control', source: 'Paper Scan', scope: 'department', peds: false, instructors: 'Yoder, Rachel', attendees: [], domains: { airway: 0, cardio: 0, trauma: 0.5, medical: 0, ops: 0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-05', date: '2025-05-15', hours: 2.0, title: 'Bleeding Control & Psychiatric Emergencies', desc: 'Hemorrhage Control & Behavioral Emergencies', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Posey, B.; Wick, Bekah', attendees: ['Boswell, William', 'Burhenn, Jessica', 'Posey, Brian', 'Wick, Bekah'], domains: { airway: 0, cardio: 0, trauma: 1.0, medical: 1.0, ops: 0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-06', date: '2025-05-30', hours: 0.75, title: 'EMS Skills & Zoll Monitor Practical Training', desc: 'Cardiac Monitor Competencies & Skills', source: 'In-House / State EMS', scope: 'independent', peds: false, instructors: 'Burhenn, Jessica', attendees: ['Burhenn, Jessica'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 0.75 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-07', date: '2025-06-01', hours: 2.5, title: 'EMS Protocol Review & Clinical Competencies', desc: 'Montana ECP Protocol Review & Competencies', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Burhenn, J.; Roth, M.', attendees: ['Arthur, Nikki', 'Burhenn, Jessica', 'Posey, Brian', 'Roth, Matthew', 'Skrutvold, Brennan'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 2.5 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-08', date: '2025-06-10', hours: 1.5, title: 'EMS Provider Meeting, QI Case Review & Local Protocols', desc: 'EMS Quality Improvement & Local Protocols', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Burhenn; Roth; Wick', attendees: ['Boswell, William', 'Burhenn, Jessica', 'Posey, Brian', 'Roth, Matthew', 'Wick, Bekah', 'Wick, Dylan'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 1.5 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-09', date: '2025-06-19', hours: 2.5, title: 'Pediatric Patient Assessment & Emergency Care (P)', desc: 'Pediatric Assessment Triangle & Emergency Care', source: 'In-House / State EMS', scope: 'department', peds: true, instructors: 'Wick, D.; Roth, M.', attendees: ['Arthur, Nikki', 'Boswell, William', 'Burhenn, Jessica', 'Posey, Brian', 'Roth, Matthew', 'Wick, Bekah', 'Wick, Dylan'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 2.5, ops: 0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-10', date: '2025-07-01', hours: 2.5, title: 'EMT Clinical Competency & Skills Verification', desc: 'EMT Clinical Skills & Competency Sign-Off', source: 'Paper Scan', scope: 'department', peds: false, instructors: 'Roth, Matthew', attendees: ['McMurray, Kyra', 'Roth, Matthew'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 2.5 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-11', date: '2025-07-17', hours: 2.5, title: 'Submersion, Drownings & Ravalli County SAR Operations', desc: 'Submersion Emergencies & SAR Medical Ops', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Butler, M. (RCSAR)', attendees: ['Boswell, William', 'Burhenn, Jessica', 'Posey, Brian', 'Roth, Matthew'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 1.25, ops: 1.25 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-12', date: '2025-07-31', hours: 8.0, title: 'Geriatric Education for EMS (GEMS Core Curriculum)', desc: 'Special Populations / Geriatric Assessment', source: 'CAPCE', scope: 'independent', peds: false, instructors: 'NAEMT Online', attendees: ['Boswell, William'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 8.0, ops: 0 }, nremtUploaded: true, nremtBy: 'CAPCE Auto', heldAttendees: [] },
+      { id: '25-13', date: '2025-07-31', hours: 2.5, title: 'Technical Rope Rescue & Patient Extrication Operations', desc: 'Technical Rescue Packaging & Extrication', source: 'Paper Scan', scope: 'department', peds: false, instructors: 'Yoder, M.; Yoder, R.', attendees: ['Burhenn, Jessica', 'Posey, Brian', 'Roth, Matthew'], domains: { airway: 0, cardio: 0, trauma: 1.25, medical: 0, ops: 1.25 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-14', date: '2025-08-21', hours: 2.5, title: 'Patient Extrication, Litter Operations & Stokes Handling', desc: 'Spinal Motion Restriction & Stokes Litter Packaging', source: 'Paper Scan', scope: 'department', peds: false, instructors: 'Yoder, Rachel', attendees: ['Boswell, William', 'Burhenn, Jessica', 'Roth, Matthew'], domains: { airway: 0, cardio: 0, trauma: 1.25, medical: 0, ops: 1.25 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-15', date: '2025-09-18', hours: 2.5, title: 'Firefighter Rehab, Heat Stress & BLS Vital Signs', desc: 'Firefighter Medical Monitoring & Rehab', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Posey, Brian', attendees: ['Arthur, Nikki', 'Ashford, William', 'Boswell, William', 'Posey, Brian', 'Roth, Matthew', 'Wick, Rachel'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 2.5 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-16', date: '2025-10-16', hours: 1.5, title: 'Pediatric Patient Assessment & Respiratory Emergencies (P)', desc: 'Pediatric Assessment & Respiratory Care', source: 'In-House / State EMS', scope: 'department', peds: true, instructors: 'Roth, Matthew', attendees: ['Arthur, Nikki', 'Ashford, William', 'Boswell, William', 'Burhenn, Jessica', 'McMurray, Kyra', 'Posey, Brian', 'Roth, Matthew', 'Wick, Bekah', 'Wick, Rachel'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 1.5, ops: 0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-17', date: '2025-10-22', hours: 30.0, title: 'EMS World Expo (Clinical Continuing Education Refresher)', desc: 'National Clinical Continuing Education', source: 'CAPCE', scope: 'department', peds: false, instructors: 'EMS World Faculty', attendees: ['Boswell, William', 'Roth, Matthew', 'Wick, Bekah'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 30.0, ops: 0 }, nremtUploaded: true, nremtBy: 'CAPCE Auto', heldAttendees: [] },
+      { id: '25-18', date: '2025-10-23', hours: 3.0, title: 'Down Firefighter Resuscitation, Gear Removal & CPR', desc: 'High-Perf CPR & RIT Gear Removal', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Stevensville Mutual Aid', attendees: ['Arthur, Nikki', 'Boswell, William', 'McMurray, Kyra', 'Posey, Brian'], domains: { airway: 0, cardio: 1.5, trauma: 0, medical: 0, ops: 1.5 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-19', date: '2025-11-06', hours: 2.5, title: 'Hazardous Materials Operations & Decontamination Refresher', desc: 'Toxicology & HazMat Decontamination', source: 'Paper Scan', scope: 'department', peds: false, instructors: 'Paulson, Rick', attendees: ['Skrutvold, Brennan'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 1.25, ops: 1.25 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-20', date: '2025-11-20', hours: 2.0, title: 'Patient Assessment, Legal Documentation & PCR Report Writing', desc: 'Legal Documentation & PCR Report Writing', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Roth, M.; Gollihugh, G.', attendees: ['Boswell, William', 'Burhenn, Jessica', 'Fisher, Cale', 'McMurray, Kyra', 'Posey, Brian', 'Roth, Matthew'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 2.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-21', date: '2025-11-24', hours: 4.25, title: 'SAR EMS Scenarios & Backcountry Patient Extraction', desc: 'Backcountry Trauma & Extraction Ops', source: 'Paper Scan', scope: 'department', peds: false, instructors: 'Butler, M.; Tan, G.', attendees: ['Arthur, Nikki', 'McMurray, Kyra'], domains: { airway: 0, cardio: 0, trauma: 2.15, medical: 0, ops: 2.10 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '25-22', date: '2025-12-18', hours: 2.0, title: 'Patient Packaging & Stokes Basket Handling', desc: 'Spinal Motion Restriction & Stokes Ops', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Yoder, Rachel; Yoder, M.', attendees: ['Arthur, Nikki', 'Ashford, William', 'Boswell, William', 'Posey, Brian', 'Roth, Matthew', 'Wick, Bekah', 'Wick, Dylan', 'Wick, Rachel'], domains: { airway: 0, cardio: 0, trauma: 1.0, medical: 0, ops: 1.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+
+      { id: '26-01', date: '2026-01-15', hours: 2.5, title: 'Respiratory Emergencies & Airway Management', desc: 'Airway Management & Ventilation', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Roth, Matthew', attendees: ['Arthur, Nikki', 'Ashford, William', 'Boswell, William', 'Posey, Brian', 'Roth, Matthew', 'Wick, Bekah', 'Wick, Dylan'], domains: { airway: 2.5, cardio: 0, trauma: 0, medical: 0, ops: 0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-02', date: '2026-02-11', hours: 3.0, title: 'CPR Instructor Certification Training', desc: 'AHA BLS CPR Instructor Certification', source: 'Standardized Course', scope: 'independent', peds: false, instructors: 'LHMC / AHA', attendees: ['Burhenn, Jessica'], domains: { airway: 0, cardio: 3.0, trauma: 0, medical: 0, ops: 0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-03', date: '2026-02-19', hours: 4.0, title: 'BLS CPR / AED Healthcare Provider Recertification', desc: 'BLS High-Performance CPR & AED', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Roth, M.; Wick, D.', attendees: ['Arthur, Nikki', 'Ashford, William', 'Boswell, William', 'Burhenn, Jessica', 'Posey, Brian', 'Roth, Matthew', 'Wick, Dylan', 'Wick, Rachel'], domains: { airway: 0, cardio: 4.0, trauma: 0, medical: 0, ops: 0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-04', date: '2026-02-26', hours: 3.0, title: 'Interior Search, Firefighter Down & Airway Packaging', desc: 'Down Firefighter Airway & RIT Ops', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Mutual Aid Staff', attendees: ['Boswell, William', 'Posey, Brian', 'Wick, Bekah', 'Wick, Dylan'], domains: { airway: 1.5, cardio: 0, trauma: 0, medical: 0, ops: 1.5 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-05', date: '2026-03-19', hours: 2.0, title: 'Death in the Field: DNR, POLST & Terminal Care Ethics', desc: 'Medical Ethics & DNR/POLST Protocols', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Roth, Matthew', attendees: ['Boswell, William', 'Burhenn, Jessica', 'Posey, Brian', 'Roth, Matthew', 'Skrutvold, Brennan', 'Wick, Bekah', 'Wick, Dylan'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 2.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-06', date: '2026-04-11', hours: 7.0, title: 'EMT Scope Endorsement Course – Bitterroot Health Hospital', desc: 'Montana EMT Scope Endorsements', source: 'Standardized Course', scope: 'department', peds: false, instructors: 'Dr. A. Houghton, MD', attendees: ['Arthur, Nikki', 'Boswell, William', 'Burhenn, Jessica', 'McMurray, Kyra', 'Posey, Brian', 'Skrutvold, Brennan', 'Wick, Bekah', 'Wick, Dylan'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 7.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-07', date: '2026-04-16', hours: 2.0, title: 'MCI and START Triage Management Drill', desc: 'Disaster Field Triage & MCI Command', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Roth, Matthew', attendees: ['Arthur, Nikki', 'Ashford, William', 'Boswell, William', 'Burhenn, Jessica', 'McMurray, Kyra', 'Roth, Matthew', 'Skrutvold, Brennan', 'Watts, Brian', 'Wick, Rachel'], domains: { airway: 0, cardio: 0, trauma: 2.0, medical: 0, ops: 0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-08', date: '2026-04-23', hours: 3.0, title: 'Vehicle Extrication & Rapid Trauma Triage (Mutual Aid)', desc: 'Vehicle Extrication & Rapid Trauma Triage', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Stevensville Mutual Aid', attendees: ['Arthur, Nikki', 'Boswell, William', 'Roth, Matthew', 'Watts, Brian', 'Wick, Dylan'], domains: { airway: 0, cardio: 0, trauma: 1.5, medical: 0, ops: 1.5 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-09', date: '2026-05-21', hours: 3.0, title: 'In-House EMS Endorsements, BLS Skills & Competencies', desc: 'BLS Assessment Skills & Med Endorsements', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Roth, Matthew', attendees: ['Arthur, Nikki', 'Ashford, William', 'Beeler, Catherine', 'Boswell, William', 'McMurray, Kyra', 'Metzger, Peter', 'Posey, Brian', 'Roth, Matthew', 'Roth, Ryan', 'Watts, Brian', 'Wick, Dylan', 'Wick, Rachel'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 3.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-10', date: '2026-05-28', hours: 2.0, title: 'Low & High Angle Rescue: Mechanical Advantage & Litter Systems', desc: 'High-Angle Patient Packaging & Rope Rescue', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Lambson; Strickland', attendees: ['Arthur, Nikki', 'Boswell, William', 'Skrutvold, Brennan', 'Watts, Brian'], domains: { airway: 0, cardio: 0, trauma: 1.0, medical: 0, ops: 1.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-11', date: '2026-06-04', hours: 2.0, title: '8-Line MEDEVAC Tactical Communications & Coordination', desc: '8-Line MEDEVAC Comms & Air Medical', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Posey, Brian', attendees: ['Ashford, William', 'Beeler, Catherine', 'Boswell, William', 'McMurray, Kyra', 'Posey, Brian', 'Roth, Matthew', 'Roth, Ryan', 'Watts, Brian', 'Wick, Dylan', 'Wick, Rachel'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 2.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-12', date: '2026-06-24', hours: 2.0, title: 'Sked Patient Packaging & EMT Endorsements w/ Medical Director', desc: 'Medical Director Verification & Sked Packaging', source: 'Paper Scan', scope: 'independent', peds: false, instructors: 'Roth, Matthew', attendees: ['Roth, Matthew'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 2.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-13', date: '2026-06-25', hours: 2.5, title: 'Elevated Structure Rescue, Emergency Egress & Packaging', desc: 'Elevated Structure Packaging & Egress', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Stevensville Mutual Aid', attendees: ['Arthur, Nikki', 'Boswell, William', 'Roth, Matthew', 'Watts, Brian', 'Wick, Dylan'], domains: { airway: 0, cardio: 0, trauma: 1.25, medical: 0, ops: 1.25 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-14', date: '2026-07-16', hours: 2.0, title: 'TECC, Bleeding Control & Tactical Airway Management', desc: 'TECC Hemorrhage Control & Airway', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Roth, Matthew', attendees: ['Beeler, Catherine', 'Boswell, William', 'Burhenn, Jessica', 'Metzger, Peter', 'Posey, Brian', 'Roth, Matthew', 'Roth, Ryan', 'Watts, Brian', 'Wick, Dylan'], domains: { airway: 1.0, cardio: 0, trauma: 1.0, medical: 0, ops: 0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-15', date: '2026-07-23', hours: 2.0, title: 'Hazardous Materials Operations & Decontamination Refresher', desc: 'Toxicology & HazMat Decontamination', source: 'Paper Scan', scope: 'department', peds: false, instructors: 'Paulson, Rick', attendees: ['Arthur, Nikki', 'Beeler, Catherine', 'Metzger, Peter', 'Watts, Brian', 'Wick, Rachel'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 1.0, ops: 1.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-16', date: '2026-08-27', hours: 2.25, title: 'School Bus Extrication, Ejections & MCI Triage', desc: 'School Bus Extrication & Blunt Trauma Triage', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Stevensville FD', attendees: ['Arthur, Nikki', 'Boswell, William', 'Burhenn, Jessica', 'Metzger, Peter', 'Posey, Brian', 'Watts, Brian'], domains: { airway: 0, cardio: 0, trauma: 1.25, medical: 0, ops: 1.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-17', date: '2026-09-17', hours: 2.0, title: 'Report Writing, PCR Documentation & BLS Skills Review', desc: 'PCR Documentation & BLS Skills Review', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'McMurray, Kyra', attendees: ['Arthur, Nikki', 'Ashford, William', 'Beeler, Catherine', 'Boswell, William', 'McMurray, Kyra', 'Posey, Brian', 'Roth, Matthew', 'Roth, Ryan', 'Skrutvold, Brennan', 'Watts, Brian', 'Wick, Rachel'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 2.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-18', date: '2026-10-29', hours: 2.0, title: 'Traffic Incident Management Systems (TIMS) – Highway Safety', desc: 'Highway Scene Safety & Traffic Management', source: 'In-House / State EMS', scope: 'department', peds: false, instructors: 'Paulson, Rick', attendees: ['Beeler, Catherine', 'Boswell, William', 'Burhenn, Jessica', 'Posey, Brian', 'Roth, Matthew', 'Wick, Rachel'], domains: { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 2.0 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] },
+      { id: '26-19', date: '2026-11-19', hours: 2.25, title: 'Air Ops – Landing Zones & Patient Packaging', desc: 'Air Medical LZ Safety & Patient Packaging', source: 'Paper Scan', scope: 'department', peds: false, instructors: 'John Whalen (Life Flight)', attendees: ['Arthur, Nikki', 'Beeler, Catherine', 'Boswell, William', 'Burhenn, Jessica', 'Metzger, Peter', 'Pope, Tony', 'Posey, Brian', 'Roth, Matthew', 'Roth, Ryan', 'Watts, Brian', 'Wick, Bekah', 'Wick, Dylan', 'Wick, Rachel'], domains: { airway: 0, cardio: 0, trauma: 1.15, medical: 0, ops: 1.10 }, nremtUploaded: false, nremtBy: '', heldAttendees: [] }
+    ];
+
+    let members = JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+    let sessions = JSON.parse(JSON.stringify(DEFAULT_SESSIONS));
+    let submissions = [];
+
+    // ==================== HELPERS & DATE EXPIRATION LOGIC ====================
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.innerText = msg;
+      toast.classList.remove('opacity-0');
+      toast.classList.add('opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0');
+      }, 2400);
+    }
+
+    function formatDisplayDate(iso) {
+      if (!iso || typeof iso !== 'string') return 'N/A';
+      const parts = iso.split('-');
+      if (parts.length !== 3) return iso;
+      return `${parts[1]}/${parts[2]}/${parts[0]}`;
+    }
+
+    function getExpirationStatus(isoDate, soonDays = 90) {
+      if (!isoDate) return { status: 'none', daysLeft: null, label: 'Not Set' };
+      const target = new Date(isoDate + 'T00:00:00');
+      if (Number.isNaN(target.getTime())) return { status: 'none', daysLeft: null, label: 'Invalid Date' };
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) return { status: 'expired', daysLeft: diffDays, label: `Expired (${Math.abs(diffDays)}d ago)` };
+      if (diffDays <= soonDays) return { status: 'soon', daysLeft: diffDays, label: `Due in ${diffDays}d` };
+      return { status: 'ok', daysLeft: diffDays, label: `Valid (${formatDisplayDate(isoDate)})` };
+    }
+
+    function isPrivateIndividualSession(s) {
+      if (!s) return false;
+      if (s.scope === 'independent') return true;
+      return Array.isArray(s.attendees) && s.attendees.length <= 1;
+    }
+
+    function attendeeMatchesMember(attendeeName, member) {
+      if (!attendeeName || !member) return false;
+      const a = attendeeName.trim().toLowerCase();
+      const mName = (member.name || '').trim().toLowerCase();
+      if (a === mName) return true;
+      if (a.includes(',')) {
+        const [last, first] = a.split(',').map(x => x.trim());
+        if (first && last && mName.includes(last) && mName.includes(first.split(' ')[0])) return true;
+      } else {
+        const parts = a.split(/\s+/);
+        if (parts.length >= 2 && mName.includes(parts[parts.length - 1]) && mName.includes(parts[0])) return true;
+      }
+      return false;
+    }
+
+    function setLedgerSaveState(isDirty, customText) {
+      const badge = document.getElementById('ledgerUnsavedBadge');
+      const txt = document.getElementById('ledgerSaveStatusText');
+      if (!badge || !txt) return;
+      if (isDirty) {
+        badge.className = 'bg-amber-100 text-amber-950 border border-amber-400 px-2 py-0.5 rounded text-[10px] font-black uppercase';
+        badge.innerText = 'Unsaved Edits';
+        txt.innerHTML = customText || 'You have recent changes—click <strong>Save / Submit Changes</strong> to push them immediately.';
+      } else {
+        badge.className = 'bg-emerald-100 text-emerald-950 border border-emerald-300 px-2 py-0.5 rounded text-[10px] font-black uppercase';
+        badge.innerText = 'Synced';
+        txt.innerHTML = customText || 'Endorsements, NREMT tags &amp; dates auto-save—click <strong>Save / Submit Changes</strong> anytime to force-sync to the cloud.';
+      }
+    }
+
+    window.submitLedgerChanges = function() {
+      saveToCloud();
+      setLedgerSaveState(false, 'All ledger edits, NREMT credit tags &amp; endorsements saved and synced.');
+      showToast('Ledger changes saved & synced!');
+    };
+
+    // ==================== CLOUD & LOCAL PERSISTENCE ====================
+    function applyLoadedPayload(raw) {
+      if (!raw) return false;
+      let parsed = raw;
+      if (typeof raw === 'string') parsed = JSON.parse(raw);
+      if (parsed.data && typeof parsed.data === 'object' && !parsed.members) parsed = parsed.data;
+      if (!Array.isArray(parsed.members) || !Array.isArray(parsed.sessions)) return false;
+
+      members = parsed.members;
+      sessions = parsed.sessions;
+      submissions = Array.isArray(parsed.submissions) ? parsed.submissions : [];
+      if (parsed.officerPin) officerPin = parsed.officerPin;
+      if (parsed.assistantOfficerPin) assistantOfficerPin = parsed.assistantOfficerPin;
+      return true;
+    }
+
+    function saveToCloud() {
+      const payload = {
+        updatedAt: new Date().toISOString(),
+        officerPin,
+        assistantOfficerPin,
+        members,
+        sessions,
+        submissions
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (err) {
+        console.warn('LocalStorage save warning:', err);
+      }
+      if (window.cloudSync && typeof window.cloudSync.save === 'function') {
+        window.cloudSync.save(CLOUD_DOC_ID, payload).catch(err => console.warn('Cloud sync warning:', err));
+      }
+      setLedgerSaveState(false);
+    }
+
+    async function initCloudSync() {
+      const badge = document.getElementById('cloudStatusBadge');
+      let loaded = false;
+
+      try {
+        const localRaw = localStorage.getItem(STORAGE_KEY);
+        if (localRaw && applyLoadedPayload(localRaw)) loaded = true;
+        if (!loaded) {
+          for (const key of LEGACY_KEYS) {
+            const legRaw = localStorage.getItem(key);
+            if (legRaw && applyLoadedPayload(legRaw)) {
+              loaded = true;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify({ officerPin, assistantOfficerPin, members, sessions, submissions }));
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Local load error:', err);
+      }
+
+      if (window.cloudSync && typeof window.cloudSync.get === 'function') {
+        try {
+          const remote = await window.cloudSync.get(CLOUD_DOC_ID);
+          if (remote && applyLoadedPayload(remote)) {
+            loaded = true;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ officerPin, assistantOfficerPin, members, sessions, submissions }));
+          }
+          if (typeof window.cloudSync.subscribe === 'function') {
+            window.cloudSync.subscribe(CLOUD_DOC_ID, remoteDoc => {
+              if (remoteDoc && applyLoadedPayload(remoteDoc)) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({ officerPin, assistantOfficerPin, members, sessions, submissions }));
+                populateMemberDropdowns();
+                if (currentUser) refreshAllViews();
+              }
+            });
+          }
+        } catch (err) {
+          console.warn('Cloud fetch fallback:', err);
+        }
+      }
+
+      if (!loaded) {
+        saveToCloud();
+      }
+
+      populateMemberDropdowns();
+      if (badge) {
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Station Cloud Sync Ready';
+      }
+    }
+
+    function populateMemberDropdowns() {
+      const loginSel = document.getElementById('loginMemberSelect');
+      const transSel = document.getElementById('transcriptMemberSelect');
+      if (loginSel) {
+        const prev = loginSel.value;
+        loginSel.innerHTML = '';
+        members.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = `${m.displayName} (${m.level})`;
+          loginSel.appendChild(opt);
+        });
+        if (prev && [...loginSel.options].some(o => o.value === prev)) loginSel.value = prev;
+      }
+      if (transSel) {
+        const prev = transSel.value;
+        transSel.innerHTML = '';
+        members.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = `${m.displayName} (${m.level})`;
+          transSel.appendChild(opt);
+        });
+        if (prev && [...transSel.options].some(o => o.value === prev)) transSel.value = prev;
+      }
+    }
+
+    // ==================== LOGIN, LOGOUT & NAVIGATION ====================
+    window.setLoginRole = function(role) {
+      const offBtn = document.getElementById('roleBtnOfficer');
+      const memBtn = document.getElementById('roleBtnMember');
+      const offForm = document.getElementById('officerLoginForm');
+      const memForm = document.getElementById('memberLoginForm');
+      if (role === 'officer') {
+        offBtn?.classList.add('bg-white', 'text-slate-900', 'shadow');
+        offBtn?.classList.remove('text-slate-600');
+        memBtn?.classList.remove('bg-white', 'text-slate-900', 'shadow');
+        memBtn?.classList.add('text-slate-600');
+        offForm?.classList.remove('hidden');
+        memForm?.classList.add('hidden');
+      } else {
+        memBtn?.classList.add('bg-white', 'text-slate-900', 'shadow');
+        memBtn?.classList.remove('text-slate-600');
+        offBtn?.classList.remove('bg-white', 'text-slate-900', 'shadow');
+        offBtn?.classList.add('text-slate-600');
+        memForm?.classList.remove('hidden');
+        offForm?.classList.add('hidden');
+      }
+    };
+
+    window.handleOfficerLogin = function(e) {
+      e.preventDefault();
+      const name = document.getElementById('loginOfficerName')?.value || 'Training Officer';
+      const pin = (document.getElementById('loginOfficerPin')?.value || '').trim();
+      const errEl = document.getElementById('officerLoginError');
+
+      if (pin === officerPin) {
+        errEl?.classList.add('hidden');
+        currentUser = { role: 'officer', isLeadAdmin: true, name };
+        enterApp();
+      } else if (pin === assistantOfficerPin) {
+        errEl?.classList.add('hidden');
+        currentUser = { role: 'officer', isLeadAdmin: false, name };
+        enterApp();
+      } else if (errEl) {
+        errEl.innerText = 'Invalid Officer PIN. Lead Admin default is 1911; Assistant Officer default is 2026.';
+        errEl.classList.remove('hidden');
+      }
+    };
+
+    window.handleMemberLogin = function(e) {
+      e.preventDefault();
+      const memberId = document.getElementById('loginMemberSelect')?.value;
+      const pin = (document.getElementById('loginMemberPin')?.value || '').trim();
+      const errEl = document.getElementById('memberLoginError');
+      const m = members.find(x => x.id === memberId);
+
+      if (!m) return;
+      if (pin === (m.pin || '1234') || pin === officerPin) {
+        errEl?.classList.add('hidden');
+        currentUser = { role: 'member', isLeadAdmin: false, name: m.displayName, memberObj: m };
+        enterApp();
+      } else if (errEl) {
+        errEl.innerText = 'Incorrect PIN. Default member PIN is 1234 or ask your Training Officer for a reset.';
+        errEl.classList.remove('hidden');
+      }
+    };
+
+    function enterApp() {
+      if (!currentUser) return;
+      document.getElementById('loginScreen')?.classList.add('hidden');
+      document.getElementById('appShell')?.classList.remove('hidden');
+
+      const userLabel = document.getElementById('loggedInUserLabel');
+      const offDesk = document.getElementById('officerDesktopNav');
+      const memDesk = document.getElementById('memberDesktopNav');
+      const offMob = document.getElementById('officerMobileNav');
+      const memMob = document.getElementById('memberMobileNav');
+
+      if (currentUser.role === 'officer') {
+        const tierText = currentUser.isLeadAdmin ? 'Lead Training Officer (Full Admin)' : 'Assistant Officer / Instructor (Roster Upload)';
+        if (userLabel) userLabel.innerText = `${currentUser.name} • ${tierText}`;
+        offDesk?.classList.remove('hidden');
+        offDesk?.classList.add('sm:flex');
+        memDesk?.classList.add('hidden');
+        memDesk?.classList.remove('sm:flex');
+        offMob?.classList.remove('hidden');
+        memMob?.classList.add('hidden');
+
+        document.querySelectorAll('.admin-only-nav').forEach(el => {
+          el.classList.toggle('hidden', !currentUser.isLeadAdmin);
+        });
+        document.getElementById('backupBtn')?.classList.toggle('hidden', !currentUser.isLeadAdmin);
+        document.getElementById('restoreBtn')?.classList.toggle('hidden', !currentUser.isLeadAdmin);
+        document.getElementById('privateLedgerToggleWrap')?.classList.toggle('hidden', !currentUser.isLeadAdmin);
+        document.getElementById('ledgerEditHeader')?.classList.toggle('hidden', !currentUser.isLeadAdmin);
+
+        const leadPinInput = document.getElementById('officerPinSettingInput');
+        const asstPinInput = document.getElementById('assistantPinSettingInput');
+        if (leadPinInput) leadPinInput.value = officerPin;
+        if (asstPinInput) asstPinInput.value = assistantOfficerPin;
+
+        switchTab('ledger');
+      } else {
+        if (userLabel) userLabel.innerText = `${currentUser.name} • Crew Member Portal`;
+        offDesk?.classList.add('hidden');
+        offDesk?.classList.remove('sm:flex');
+        memDesk?.classList.remove('hidden');
+        memDesk?.classList.add('sm:flex');
+        offMob?.classList.add('hidden');
+        memMob?.classList.remove('hidden');
+
+        document.getElementById('memberSelfServicePanel')?.classList.remove('hidden');
+        document.getElementById('transcriptMemberPickerWrap')?.classList.add('hidden');
+        const tSel = document.getElementById('transcriptMemberSelect');
+        if (tSel && currentUser.memberObj) tSel.value = currentUser.memberObj.id;
+
+        switchTab('transcripts');
+      }
+
+      refreshAllViews();
+    }
+
+    window.logout = function() {
+      currentUser = null;
+      document.getElementById('appShell')?.classList.add('hidden');
+      document.getElementById('loginScreen')?.classList.remove('hidden');
+      const p1 = document.getElementById('loginOfficerPin');
+      const p2 = document.getElementById('loginMemberPin');
+      if (p1) p1.value = '';
+      if (p2) p2.value = '';
+    };
+
+    window.switchTab = function(tabName) {
+      const views = ['ledger', 'add', 'approvals', 'endorsements', 'memberSubmit', 'memberDeptLog', 'transcripts', 'roster'];
+      views.forEach(v => {
+        document.getElementById(`view-${v}`)?.classList.toggle('hidden', v !== tabName);
+      });
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const active = btn.id === `tab-${tabName}`;
+        btn.classList.toggle('bg-blue-600', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('shadow', active);
+        btn.classList.toggle('text-slate-300', !active);
+      });
+      document.querySelectorAll('.mnav-btn').forEach(btn => {
+        const active = btn.id === `mtab-${tabName}`;
+        btn.classList.toggle('bg-blue-600', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('text-slate-300', !active);
+      });
+      document.querySelectorAll('.m-desk-btn').forEach(btn => {
+        const active = btn.id === `mtab-desk-${tabName}`;
+        btn.classList.toggle('bg-emerald-600', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('shadow', active);
+        btn.classList.toggle('text-slate-300', !active);
+      });
+      document.querySelectorAll('.mmnav-btn').forEach(btn => {
+        const active = btn.id === `mmtab-${tabName}`;
+        btn.classList.toggle('bg-emerald-600', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('text-slate-300', !active);
+      });
+
+      if (tabName === 'ledger') renderLedger();
+      if (tabName === 'add') {
+        if (!document.getElementById('fDate')?.value) document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+        renderAttendeeCheckboxes();
+        updateDomainSum();
+      }
+      if (tabName === 'approvals') renderApprovalsQueue();
+      if (tabName === 'endorsements') renderEndorsements();
+      if (tabName === 'memberSubmit') {
+        if (!document.getElementById('msDate')?.value) document.getElementById('msDate').value = new Date().toISOString().split('T')[0];
+        renderMemberSubmissionHistory();
+      }
+      if (tabName === 'memberDeptLog') renderMemberDeptLog();
+      if (tabName === 'transcripts') renderTranscript();
+      if (tabName === 'roster') renderCrewSummary();
+    };
+
+    function refreshAllViews() {
+      updatePendingBadges();
+      updateOfficerExpirationAlerts();
+      if (currentUser?.role === 'officer') {
+        renderLedger();
+        if (currentUser.isLeadAdmin) {
+          renderApprovalsQueue();
+          renderEndorsements();
+          renderCrewSummary();
+          renderTranscript();
+        }
+      } else if (currentUser?.role === 'member') {
+        renderMemberSelfService();
+        renderTranscript();
+        renderMemberDeptLog();
+        renderMemberSubmissionHistory();
+      }
+    }
+
+    function updatePendingBadges() {
+      const count = submissions.filter(s => s.status === 'pending').length;
+      ['pendingBadgeDesktop', 'pendingBadgeMobile'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerText = String(count);
+        el.classList.toggle('hidden', count === 0);
+      });
+    }
+
+    function updateOfficerExpirationAlerts() {
+      const banner = document.getElementById('officerGlobalAlertBanner');
+      const textEl = document.getElementById('officerGlobalAlertText');
+      if (!banner || !textEl) return;
+
+      if (!currentUser || currentUser.role !== 'officer' || !currentUser.isLeadAdmin) {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const alerts = [];
+      members.forEach(m => {
+        const bls = getExpirationStatus(m.blsExp, 90);
+        if (bls.status === 'expired' || bls.status === 'soon') {
+          alerts.push({ name: m.displayName, type: 'BLS CPR', status: bls.status, detail: bls.label });
+        }
+        const rec = getExpirationStatus(m.recertDue, 180);
+        if (rec.status === 'expired' || rec.status === 'soon') {
+          alerts.push({ name: m.displayName, type: 'NREMT / State', status: rec.status, detail: rec.label });
+        }
+      });
+
+      ['expiryBadgeDesktop', 'expiryBadgeMobile'].forEach(id => {
+        const b = document.getElementById(id);
+        if (!b) return;
+        b.innerText = String(alerts.length);
+        b.classList.toggle('hidden', alerts.length === 0);
+      });
+
+      if (alerts.length === 0) {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      banner.classList.remove('hidden');
+      const shown = expandedExpiryAlert ? alerts : alerts.slice(0, 3);
+      const remaining = alerts.length - shown.length;
+      const itemsHtml = shown.map(a => `<span class="inline-block mr-2"><strong>${a.name}</strong> (${a.type}: ${a.detail})</span>`).join('');
+      const toggleBtn = alerts.length > 3
+        ? `<button type="button" onclick="toggleExpiryAlertExpand()" class="underline font-black ml-1 cursor-pointer">${expandedExpiryAlert ? 'Show less ↑' : `(+${remaining} more)`}</button>`
+        : '';
+      textEl.innerHTML = `<span class="font-black">${alerts.length} Active Expiration Warning(s):</span> ${itemsHtml}${toggleBtn}`;
+    }
+
+    window.toggleExpiryAlertExpand = function() {
+      expandedExpiryAlert = !expandedExpiryAlert;
+      updateOfficerExpirationAlerts();
+    };
+
+    // ==================== MASTER LEDGER RENDERING & NREMT TRACKING ====================
+    window.setLedgerYear = function(yr) {
+      activeLedgerYear = yr;
+      ['2026', '2025', 'all'].forEach(k => {
+        const btn = document.getElementById(`yr-${k}`);
+        if (!btn) return;
+        const active = k === yr;
+        btn.classList.toggle('bg-slate-900', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('bg-slate-100', !active);
+        btn.classList.toggle('text-slate-700', !active);
+      });
+      renderLedger();
+    };
+
+    window.copyCourseText = function(txt) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast(`Copied: "${txt}"`);
+      } catch (err) {
+        showToast('Unable to copy text.');
+      }
+    };
+
+    window.toggleSessionNremtUploaded = function(sessionId, checked) {
+      const s = sessions.find(x => x.id === sessionId);
+      if (!s) return;
+      s.nremtUploaded = !!checked;
+      s.nremtBy = checked ? (currentUser?.name || 'Training Officer') : '';
+      s.nremtDate = checked ? new Date().toISOString().split('T')[0] : '';
+      saveToCloud();
+      renderLedger();
+      showToast(checked ? `Marked "${s.title}" as Added to NREMT` : `Unmarked NREMT upload for "${s.title}"`);
+    };
+
+    window.toggleHeldAttendee = function(sessionId, attendeeName) {
+      const s = sessions.find(x => x.id === sessionId);
+      if (!s) return;
+      if (!Array.isArray(s.heldAttendees)) s.heldAttendees = [];
+      const idx = s.heldAttendees.indexOf(attendeeName);
+      if (idx >= 0) {
+        s.heldAttendees.splice(idx, 1);
+      } else {
+        s.heldAttendees.push(attendeeName);
+      }
+      saveToCloud();
+      renderLedger();
+    };
+
+    window.selectAllNremtForSession = function(sessionId, allAdded) {
+      const s = sessions.find(x => x.id === sessionId);
+      if (!s) return;
+      const eligible = (s.attendees || []).filter(att => {
+        const m = members.find(mem => attendeeMatchesMember(att, mem));
+        return !m || s.date >= m.cutoff;
+      });
+      s.heldAttendees = allAdded ? [] : [...eligible];
+      saveToCloud();
+      renderLedger();
+    };
+
+    function renderLedger() {
+      const tbody = document.getElementById('ledgerTableBody');
+      if (!tbody) return;
+
+      const query = (document.getElementById('ledgerSearch')?.value || '').trim().toLowerCase();
+      const showPriv = currentUser?.isLeadAdmin ? !!document.getElementById('showPrivateOnLedger')?.checked : false;
+
+      const yearFilteredAll = sessions.filter(s => {
+        if (activeLedgerYear === '2026') return s.date.startsWith('2026');
+        if (activeLedgerYear === '2025') return s.date.startsWith('2025');
+        return true;
+      });
+
+      const privateCount = yearFilteredAll.filter(isPrivateIndividualSession).length;
+      const privLabel = document.getElementById('privateToggleLabel');
+      if (privLabel) privLabel.innerText = `Show Private Individual CE (${privateCount})`;
+
+      const c2026 = sessions.filter(s => s.date.startsWith('2026') && (showPriv || !isPrivateIndividualSession(s))).length;
+      const c2025 = sessions.filter(s => s.date.startsWith('2025') && (showPriv || !isPrivateIndividualSession(s))).length;
+      const cAll = sessions.filter(s => showPriv || !isPrivateIndividualSession(s)).length;
+
+      const b26 = document.getElementById('yr-2026');
+      const b25 = document.getElementById('yr-2025');
+      const bAll = document.getElementById('yr-all');
+      if (b26) b26.innerText = `2026 Ledger (${c2026})`;
+      if (b25) b25.innerText = `2025 Ledger (${c2025})`;
+      if (bAll) bAll.innerText = `All Sessions (${cAll})`;
+
+      const filtered = yearFilteredAll.filter(s => {
+        if (!showPriv && isPrivateIndividualSession(s)) return false;
+        if (!query) return true;
+        return (
+          (s.title || '').toLowerCase().includes(query) ||
+          (s.desc || '').toLowerCase().includes(query) ||
+          (s.instructors || '').toLowerCase().includes(query) ||
+          (s.attendees || []).some(a => a.toLowerCase().includes(query))
+        );
+      });
+
+      const heading = document.getElementById('ledgerHeading');
+      if (heading) {
+        heading.innerText = activeLedgerYear === 'all'
+          ? 'All Verified EMS Continuing Education Sessions (2025–2026)'
+          : `${activeLedgerYear} Verified EMS Continuing Education Master Ledger`;
+      }
+
+      const totalHrs = filtered.reduce((acc, s) => acc + (Number(s.hours) || 0), 0);
+      const statsEl = document.getElementById('ledgerStats');
+      if (statsEl) statsEl.innerText = `${filtered.length} Sessions • ${totalHrs.toFixed(2)} Hours`;
+
+      tbody.innerHTML = '';
+      filtered.forEach((s, idx) => {
+        const d = s.domains || { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 0 };
+        const badges = [];
+        if (d.airway > 0) badges.push(`<span class="bg-sky-100 text-sky-950 font-bold px-1.5 py-0.2 rounded border border-sky-300">Airway: ${d.airway}</span>`);
+        if (d.cardio > 0) badges.push(`<span class="bg-red-100 text-red-950 font-bold px-1.5 py-0.2 rounded border border-red-300">Cardio: ${d.cardio}</span>`);
+        if (d.trauma > 0) badges.push(`<span class="bg-amber-100 text-amber-950 font-bold px-1.5 py-0.2 rounded border border-amber-300">Trauma: ${d.trauma}</span>`);
+        if (d.medical > 0) badges.push(`<span class="bg-purple-100 text-purple-950 font-bold px-1.5 py-0.2 rounded border border-purple-300">Medical: ${d.medical}</span>`);
+        if (d.ops > 0) badges.push(`<span class="bg-emerald-100 text-emerald-950 font-bold px-1.5 py-0.2 rounded border border-emerald-300">Ops: ${d.ops}</span>`);
+
+        const privBadge = isPrivateIndividualSession(s)
+          ? `<span class="ml-1 inline-block whitespace-nowrap shrink-0 bg-slate-200 text-slate-900 border border-slate-400 px-1.5 py-0.2 rounded text-[7px] font-black uppercase">Private Individual</span>`
+          : '';
+        const pedsBadge = s.peds
+          ? `<span class="ml-1 inline-block whitespace-nowrap shrink-0 bg-amber-200 text-amber-950 px-1 py-0.2 rounded text-[7px] font-black">(P)</span>`
+          : '';
+
+        const heldList = Array.isArray(s.heldAttendees) ? s.heldAttendees : [];
+        const eligibleNames = (s.attendees || []).filter(att => {
+          const m = members.find(mem => attendeeMatchesMember(att, mem));
+          return !m || s.date >= m.cutoff;
+        });
+
+        const attendeeChips = (s.attendees || []).map(att => {
+          const m = members.find(mem => attendeeMatchesMember(att, mem));
+          const preCert = m && s.date < m.cutoff;
+          const isHeld = heldList.includes(att);
+          if (preCert) {
+            return `<span class="inline-block bg-slate-100 text-slate-400 line-through px-1.5 py-0.2 rounded text-[7.5px] mr-1 mb-0.5">${att} (Pre-Cert)</span>`;
+          }
+          const safeAtt = att.replace(/'/g, "\\'");
+          if (currentUser?.isLeadAdmin) {
+            const stateCls = isHeld
+              ? 'bg-amber-100 border-amber-400 text-amber-950 font-bold hover:bg-amber-200'
+              : 'bg-emerald-50 border-emerald-300 text-slate-900 font-semibold hover:bg-emerald-100';
+            const statusTag = isHeld
+              ? '<span class="ml-1 bg-amber-300 text-amber-950 px-1 rounded text-[6.8px] font-black uppercase">Held</span>'
+              : '';
+            return `<button type="button" onclick="toggleHeldAttendee('${s.id}', '${safeAtt}')" title="Click to toggle Held status" class="inline-flex items-center border px-1.5 py-0.2 rounded text-[7.5px] mr-1 mb-0.5 cursor-pointer transition ${stateCls}">${att}${statusTag}</button>`;
+          }
+          const heldTag = isHeld
+            ? '<span class="ml-1 bg-amber-200 text-amber-950 px-1 rounded text-[6.8px] font-black uppercase">Held</span>'
+            : '';
+          return `<span class="inline-flex items-center bg-slate-100 border border-slate-300 text-slate-900 px-1.5 py-0.2 rounded text-[7.5px] font-semibold mr-1 mb-0.5">${att}${heldTag}</span>`;
+        }).join('');
+
+        const bulkBar = currentUser?.isLeadAdmin && eligibleNames.length > 0
+          ? `<div class="mt-1 flex flex-wrap items-center gap-1.5 text-[7px] text-slate-600">
+               <span>Click any name to toggle <strong>Held</strong>:</span>
+               <button type="button" onclick="selectAllNremtForSession('${s.id}', true)" class="text-blue-700 hover:underline font-bold cursor-pointer">All Added</button>
+               <span>•</span>
+               <button type="button" onclick="selectAllNremtForSession('${s.id}', false)" class="text-amber-800 hover:underline font-bold cursor-pointer">All Held</button>
+             </div>`
+          : '';
+
+        const dateStamp = s.nremtDate ? ` on ${formatDisplayDate(s.nremtDate)}` : '';
+        const nremtStamp = s.nremtUploaded
+          ? `<span class="text-emerald-800 font-bold text-[7.5px]">Added to NREMT${s.nremtBy ? ` by ${s.nremtBy}` : ''}${dateStamp}</span>`
+          : `<span class="text-slate-500 text-[7.5px]">Not marked on NREMT</span>`;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 divide-x divide-slate-200';
+        tr.innerHTML = `
+          <td class="text-center font-bold text-slate-600 bg-slate-50">${idx + 1}</td>
+          <td class="font-mono font-bold whitespace-nowrap px-1.5 py-1">${formatDisplayDate(s.date)}</td>
+          <td class="text-center font-mono font-black px-1 py-1">${Number(s.hours).toFixed(2).replace(/\.00$/, '.0')}</td>
+          <td class="px-2 py-1">
+            <div class="flex items-center flex-wrap gap-1">
+              <span class="font-bold text-slate-950 cursor-pointer hover:underline" onclick="copyCourseText('${(s.title || '').replace(/'/g, "\\'")}')">${s.title}</span>
+              ${pedsBadge}${privBadge}
+            </div>
+          </td>
+          <td class="px-2 py-1 space-y-0.5">
+            <div class="text-slate-700 cursor-pointer hover:underline" onclick="copyCourseText('${(s.desc || '').replace(/'/g, "\\'")}')">${s.desc || ''}</div>
+            <div class="flex flex-wrap gap-1">${badges.join('')}</div>
+          </td>
+          <td class="px-1.5 py-1 text-[8px]">${s.instructors || ''}</td>
+          <td class="px-2 py-1">
+            <div class="flex flex-wrap items-center justify-between gap-1 mb-1">
+              <label class="inline-flex items-center gap-1 text-[7.5px] font-bold cursor-pointer">
+                <input type="checkbox" ${s.nremtUploaded ? 'checked' : ''} ${currentUser?.isLeadAdmin ? '' : 'disabled'} onchange="toggleSessionNremtUploaded('${s.id}', this.checked)">
+                <span>Added to NREMT</span>
+              </label>
+              ${nremtStamp}
+            </div>
+            <div class="flex flex-wrap">${attendeeChips || '<span class="text-slate-400 italic">No eligible NREMT attendees</span>'}</div>
+            ${bulkBar}
+          </td>
+          ${currentUser?.isLeadAdmin ? `<td class="no-print text-center px-1 py-1"><button type="button" onclick="editSession('${s.id}')" class="bg-slate-100 hover:bg-blue-100 text-blue-900 font-bold px-2 py-0.5 rounded text-[8px] cursor-pointer">Edit</button></td>` : ''}
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ==================== ADD / SCAN ROSTER & NREMT CLASSIFIER ====================
+    function renderAttendeeCheckboxes(selectedList = []) {
+      const grid = document.getElementById('attendeeCheckboxGrid');
+      if (!grid) return;
+      const dateVal = document.getElementById('fDate')?.value || new Date().toISOString().split('T')[0];
+      grid.innerHTML = '';
+
+      members.forEach(m => {
+        const preCert = dateVal < m.cutoff;
+        const checked = selectedList.includes(m.name);
+        const lbl = document.createElement('label');
+        lbl.className = `flex items-center justify-between border rounded-lg px-2.5 py-1.5 text-[11px] cursor-pointer ${preCert ? 'bg-amber-50/70 border-amber-300 text-slate-600' : 'bg-white border-slate-300 text-slate-900 font-semibold'}`;
+        lbl.innerHTML = `
+          <span class="inline-flex items-center gap-1.5">
+            <input type="checkbox" class="att-chk rounded text-blue-600" value="${m.name}" ${checked ? 'checked' : ''}>
+            <span>${m.name}</span>
+          </span>
+          <span class="text-[9px] font-mono ${preCert ? 'text-amber-800 font-bold' : 'text-slate-500'}">${preCert ? `Pre-Cert (<${formatDisplayDate(m.cutoff)})` : m.level}</span>
+        `;
+        grid.appendChild(lbl);
+      });
+    }
+
+    window.refreshAttendeePreview = function() {
+      const checked = [...document.querySelectorAll('.att-chk:checked')].map(el => el.value);
+      renderAttendeeCheckboxes(checked);
+    };
+
+    window.toggleAllAttendees = function(state) {
+      document.querySelectorAll('.att-chk').forEach(el => { el.checked = state; });
+    };
+
+    window.updateDomainSum = function() {
+      const hrs = Number(document.getElementById('fHours')?.value) || 0;
+      const a = Number(document.getElementById('dAirway')?.value) || 0;
+      const c = Number(document.getElementById('dCardio')?.value) || 0;
+      const t = Number(document.getElementById('dTrauma')?.value) || 0;
+      const m = Number(document.getElementById('dMedical')?.value) || 0;
+      const o = Number(document.getElementById('dOps')?.value) || 0;
+      const sum = a + c + t + m + o;
+
+      const status = document.getElementById('domainSumStatus');
+      if (status) {
+        const match = Math.abs(sum - hrs) < 0.001;
+        status.className = `text-xs font-mono font-bold ${match ? 'text-emerald-700' : 'text-amber-700'}`;
+        status.innerText = `Assigned: ${sum.toFixed(2)} / ${hrs.toFixed(2)} hrs`;
+      }
+
+      const warn = document.getElementById('emtOpsCapWarning');
+      if (warn) warn.classList.toggle('hidden', o <= 2.0);
+    };
+
+    window.autoClassifyDomains = function() {
+      const title = `${document.getElementById('fTitle')?.value || ''} ${document.getElementById('fDesc')?.value || ''}`.toLowerCase();
+      const hrs = Number(document.getElementById('fHours')?.value) || 0;
+      if (hrs <= 0) {
+        showToast('Enter Total Hours first so hours can be distributed.');
+        return;
+      }
+
+      let domain = 'ops';
+      if (/airway|ventilation|intubat|supraglottic|cpap|respiratory|oxygen/.test(title)) domain = 'airway';
+      else if (/cardiac|cardio|cpr|aed|zoll|ecg|12-lead|acs|chest pain|resuscitation/.test(title)) domain = 'cardio';
+      else if (/trauma|bleeding|hemorrhage|tourniquet|fracture|extrication|triage|mci|tecc|phtls|sked|stokes|rope/.test(title)) domain = 'trauma';
+      else if (/pediatric|child|infant|geriatric|gems|medical|seizure|stroke|diabetic|toxicology|hazmat|psych|sepsis/.test(title)) domain = 'medical';
+
+      document.getElementById('dAirway').value = domain === 'airway' ? hrs : 0;
+      document.getElementById('dCardio').value = domain === 'cardio' ? hrs : 0;
+      document.getElementById('dTrauma').value = domain === 'trauma' ? hrs : 0;
+      document.getElementById('dMedical').value = domain === 'medical' ? hrs : 0;
+      document.getElementById('dOps').value = domain === 'ops' ? hrs : 0;
+      if (/pediatric|child|infant/.test(title)) {
+        document.getElementById('fPeds').checked = true;
+      }
+      updateDomainSum();
+      showToast(`Auto-classified ${hrs}h under ${domain.toUpperCase()}`);
+    };
+
+    window.scanRosterPhoto = function(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      document.getElementById('fSource').value = 'Paper Scan';
+      showToast(`Attached roster scan "${file.name}" — verify date, hours & attendees below.`);
+    };
+
+    window.editSession = function(sessionId) {
+      const s = sessions.find(x => x.id === sessionId);
+      if (!s) return;
+      switchTab('add');
+      document.getElementById('formBadge').innerText = 'Editing Existing Session';
+      document.getElementById('formHeading').innerText = `Edit Training: ${s.title}`;
+      document.getElementById('editSessionId').value = s.id;
+      document.getElementById('fDate').value = s.date;
+      document.getElementById('fHours').value = s.hours;
+      document.getElementById('fSource').value = s.source || 'In-House / State EMS';
+      document.getElementById('fTrainingScope').value = s.scope || 'department';
+      document.getElementById('fTitle').value = s.title;
+      document.getElementById('fInstructor').value = s.instructors || '';
+      document.getElementById('fDesc').value = s.desc || '';
+      document.getElementById('fPeds').checked = !!s.peds;
+      const d = s.domains || {};
+      document.getElementById('dAirway').value = d.airway || 0;
+      document.getElementById('dCardio').value = d.cardio || 0;
+      document.getElementById('dTrauma').value = d.trauma || 0;
+      document.getElementById('dMedical').value = d.medical || 0;
+      document.getElementById('dOps').value = d.ops || 0;
+      renderAttendeeCheckboxes(s.attendees || []);
+      updateDomainSum();
+    };
+
+    window.resetForm = function() {
+      document.getElementById('sessionForm')?.reset();
+      document.getElementById('editSessionId').value = '';
+      document.getElementById('formBadge').innerText = 'New Training Session';
+      document.getElementById('formHeading').innerText = 'Log New EMS Drill / Roster';
+      document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+      renderAttendeeCheckboxes([]);
+      updateDomainSum();
+    };
+
+    window.saveSession = function(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editSessionId')?.value;
+      const date = document.getElementById('fDate')?.value;
+      const hours = Number(document.getElementById('fHours')?.value) || 0;
+      const source = document.getElementById('fSource')?.value || 'In-House / State EMS';
+      const scope = document.getElementById('fTrainingScope')?.value || 'department';
+      const title = (document.getElementById('fTitle')?.value || '').trim();
+      const instructors = (document.getElementById('fInstructor')?.value || '').trim();
+      const desc = (document.getElementById('fDesc')?.value || '').trim();
+      const peds = !!document.getElementById('fPeds')?.checked;
+      const domains = {
+        airway: Number(document.getElementById('dAirway')?.value) || 0,
+        cardio: Number(document.getElementById('dCardio')?.value) || 0,
+        trauma: Number(document.getElementById('dTrauma')?.value) || 0,
+        medical: Number(document.getElementById('dMedical')?.value) || 0,
+        ops: Number(document.getElementById('dOps')?.value) || 0
+      };
+      const attendees = [...document.querySelectorAll('.att-chk:checked')].map(el => el.value);
+
+      if (editId) {
+        const existing = sessions.find(x => x.id === editId);
+        if (existing) {
+          Object.assign(existing, { date, hours, source, scope, title, instructors, desc, peds, domains, attendees });
+        }
+      } else {
+        sessions.unshift({
+          id: `custom-${Date.now()}`,
+          date,
+          hours,
+          title,
+          desc,
+          source,
+          scope,
+          peds,
+          instructors,
+          attendees,
+          domains,
+          nremtUploaded: false,
+          nremtBy: '',
+          heldAttendees: []
+        });
+      }
+
+      saveToCloud();
+      resetForm();
+      switchTab('ledger');
+      showToast('Roster saved & synced!');
+    };
+
+    // ==================== MEMBER OUTSIDE TRAINING & APPROVALS ====================
+    const DOMAIN_LABELS = {
+      airway: 'Airway',
+      cardio: 'Cardiology',
+      trauma: 'Trauma',
+      medical: 'Medical',
+      ops: 'EMS Operations'
+    };
+
+    function recommendDomainFromText(text) {
+      const t = (text || '').toLowerCase();
+      if (/airway|ventilation|intubat|supraglottic|cpap|respiratory|oxygen/.test(t)) return 'airway';
+      if (/cardiac|cardio|cpr|aed|ecg|12-lead|acs|resuscitation/.test(t)) return 'cardio';
+      if (/trauma|bleeding|hemorrhage|tourniquet|extrication|triage|mci|tecc|phtls/.test(t)) return 'trauma';
+      if (/pediatric|child|infant|geriatric|gems|medical|seizure|stroke|diabetic|toxicology|hazmat|psych/.test(t)) return 'medical';
+      return 'ops';
+    }
+
+    window.updateMemberDomainHint = function() {
+      const title = document.getElementById('msTitle')?.value || '';
+      const chosen = document.getElementById('msDomain')?.value || 'ops';
+      const box = document.getElementById('msDomainSuggestionBox');
+      if (!box) return;
+      if (title.trim().length < 4) {
+        box.classList.add('hidden');
+        return;
+      }
+      const rec = recommendDomainFromText(title);
+      if (rec !== chosen) {
+        box.classList.remove('hidden');
+        box.innerText = `NREMT Category Tip: Based on the course title, "${DOMAIN_LABELS[rec]}" may fit better than "${DOMAIN_LABELS[chosen]}". Your Training Officer will verify during approval.`;
+      } else {
+        box.classList.add('hidden');
+      }
+    };
+
+    window.previewMemberProof = function(event) {
+      const file = event.target.files?.[0];
+      const wrap = document.getElementById('msProofPreviewWrap');
+      const img = document.getElementById('msProofPreviewImg');
+      if (!file || !wrap || !img) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        pendingProofDataUrl = ev.target.result;
+        img.src = pendingProofDataUrl;
+        wrap.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.submitMemberTraining = function(e) {
+      e.preventDefault();
+      if (!currentUser?.memberObj) return;
+      const date = document.getElementById('msDate')?.value;
+      const hours = Number(document.getElementById('msHours')?.value) || 0;
+      const scope = document.getElementById('msScope')?.value || 'independent';
+      const title = (document.getElementById('msTitle')?.value || '').trim();
+      const selectedDomain = document.getElementById('msDomain')?.value || 'ops';
+      const recommendedDomain = recommendDomainFromText(title);
+      const instructors = (document.getElementById('msInstructor')?.value || '').trim();
+      const peds = !!document.getElementById('msPeds')?.checked;
+      const notes = (document.getElementById('msNotes')?.value || '').trim();
+
+      if (!pendingProofDataUrl) {
+        showToast('Please attach a roster photo or certificate proof.');
+        return;
+      }
+
+      submissions.unshift({
+        id: `sub-${Date.now()}`,
+        memberId: currentUser.memberObj.id,
+        memberName: currentUser.memberObj.name,
+        memberDisplayName: currentUser.memberObj.displayName,
+        date,
+        hours,
+        scope,
+        title,
+        selectedDomain,
+        recommendedDomain,
+        instructors,
+        peds,
+        notes,
+        proofDataUrl: pendingProofDataUrl,
+        status: 'pending',
+        officerNote: '',
+        categoryChangeNote: ''
+      });
+
+      saveToCloud();
+      pendingProofDataUrl = '';
+      document.getElementById('msProofPreviewWrap')?.classList.add('hidden');
+      e.target.reset();
+      document.getElementById('msDate').value = new Date().toISOString().split('T')[0];
+      updatePendingBadges();
+      renderMemberSubmissionHistory();
+      showToast('Submitted with proof for Training Officer approval!');
+    };
+
+    function renderApprovalsQueue() {
+      const container = document.getElementById('approvalQueueContainer');
+      if (!container) return;
+      const pending = submissions.filter(s => s.status === 'pending');
+      if (pending.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-500 italic py-4 text-center">No pending outside training submissions right now.</div>';
+        return;
+      }
+
+      container.innerHTML = pending.map(sub => {
+        const mismatch = sub.recommendedDomain && sub.recommendedDomain !== sub.selectedDomain;
+        const defaultDom = mismatch ? sub.recommendedDomain : sub.selectedDomain;
+        return `
+          <div class="border border-slate-300 rounded-xl p-4 bg-slate-50 space-y-3 text-xs">
+            <div class="flex flex-wrap justify-between items-start gap-2">
+              <div>
+                <div class="font-black text-slate-950 text-sm">${sub.title} <span class="text-blue-900 font-mono">(${sub.hours}h)</span></div>
+                <div class="text-[11px] text-slate-600">Submitted by <strong>${sub.memberDisplayName}</strong> • Date: <span class="font-mono">${formatDisplayDate(sub.date)}</span> • Type: <span class="font-bold">${sub.scope === 'department' ? 'Department Drill' : 'Independent / Private'}</span></div>
+                <div class="text-[11px] text-slate-600">Instructor/Sponsor: <strong>${sub.instructors}</strong>${sub.notes ? ` • Notes: "${sub.notes}"` : ''}</div>
+              </div>
+              <span class="bg-amber-200 text-amber-950 px-2 py-0.5 rounded font-black text-[10px] uppercase">Pending Review</span>
+            </div>
+
+            ${mismatch ? `<div class="bg-amber-100 border border-amber-400 text-amber-950 rounded-lg px-3 py-1.5 text-[11px] font-semibold">Member selected <strong>${DOMAIN_LABELS[sub.selectedDomain]}</strong> — Recommended: <strong>${DOMAIN_LABELS[sub.recommendedDomain]}</strong>.</div>` : ''}
+
+            ${sub.proofDataUrl ? `<div><img src="${sub.proofDataUrl}" alt="Submitted proof" class="max-h-48 rounded-lg border border-slate-300 bg-white"></div>` : ''}
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Approve Under NREMT Domain</label>
+                <select id="appDom-${sub.id}" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white font-semibold">
+                  ${Object.keys(DOMAIN_LABELS).map(k => `<option value="${k}" ${k === defaultDom ? 'selected' : ''}>${DOMAIN_LABELS[k]}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-700 mb-0.5">Optional Note to Member</label>
+                <input type="text" id="appNote-${sub.id}" placeholder="Reason for change or decline..." class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white">
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-2">
+              <button type="button" onclick="decideSubmission('${sub.id}', false)" class="px-3.5 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-950 font-bold cursor-pointer">Decline</button>
+              <button type="button" onclick="decideSubmission('${sub.id}', true)" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-black cursor-pointer">Approve &amp; Add to Ledger</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.decideSubmission = function(subId, approved) {
+      const sub = submissions.find(x => x.id === subId);
+      if (!sub) return;
+      const chosenDom = document.getElementById(`appDom-${sub.id}`)?.value || sub.selectedDomain;
+      const customNote = (document.getElementById(`appNote-${sub.id}`)?.value || '').trim();
+
+      sub.status = approved ? 'approved' : 'declined';
+      sub.officerNote = customNote;
+
+      if (approved) {
+        if (chosenDom !== sub.selectedDomain) {
+          sub.categoryChangeNote = `Category Adjusted by Training Officer: Changed from ${DOMAIN_LABELS[sub.selectedDomain]} to ${DOMAIN_LABELS[chosenDom]} per NREMT NCCP classification guidelines.${customNote ? ` (${customNote})` : ''}`;
+        } else if (customNote) {
+          sub.categoryChangeNote = `Officer Note: ${customNote}`;
+        }
+
+        const domains = { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 0 };
+        domains[chosenDom] = Number(sub.hours) || 0;
+
+        sessions.unshift({
+          id: `sub-ses-${sub.id}`,
+          date: sub.date,
+          hours: Number(sub.hours) || 0,
+          title: sub.peds ? `${sub.title} (P)` : sub.title,
+          desc: `${DOMAIN_LABELS[chosenDom]} (${sub.hours}h)`,
+          source: 'Approved Outside CE',
+          scope: sub.scope || 'independent',
+          peds: !!sub.peds,
+          instructors: sub.instructors,
+          attendees: [sub.memberName],
+          domains,
+          nremtUploaded: false,
+          nremtBy: '',
+          heldAttendees: []
+        });
+      }
+
+      saveToCloud();
+      updatePendingBadges();
+      renderApprovalsQueue();
+      renderLedger();
+      showToast(approved ? `Approved "${sub.title}"` : `Declined "${sub.title}"`);
+    };
+
+    function renderMemberSubmissionHistory() {
+      const box = document.getElementById('memberSubmissionHistory');
+      if (!box || !currentUser?.memberObj) return;
+      const mine = submissions.filter(s => s.memberId === currentUser.memberObj.id);
+      if (mine.length === 0) {
+        box.innerHTML = '<div class="text-slate-500 italic">No outside training requests submitted yet.</div>';
+        return;
+      }
+
+      box.innerHTML = mine.map(s => {
+        const pill = s.status === 'approved'
+          ? 'bg-emerald-100 text-emerald-950 border-emerald-300'
+          : s.status === 'declined'
+            ? 'bg-red-100 text-red-950 border-red-300'
+            : 'bg-amber-100 text-amber-950 border-amber-300';
+        const changeNotice = s.categoryChangeNote
+          ? `<div class="mt-1.5 bg-blue-50 border border-blue-300 text-blue-950 rounded-lg px-2.5 py-1.5 text-[11px] font-medium">${s.categoryChangeNote}</div>`
+          : '';
+        const declineNotice = s.status === 'declined' && s.officerNote
+          ? `<div class="mt-1.5 bg-red-50 border border-red-300 text-red-950 rounded-lg px-2.5 py-1.5 text-[11px]">Reason: ${s.officerNote}</div>`
+          : '';
+        return `
+          <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
+            <div class="flex justify-between items-center gap-2">
+              <div><span class="font-bold text-slate-900">${s.title}</span> <span class="font-mono text-slate-600">(${formatDisplayDate(s.date)} • ${s.hours}h)</span></div>
+              <span class="px-2 py-0.5 rounded border text-[10px] font-black uppercase ${pill}">${s.status}</span>
+            </div>
+            ${changeNotice}${declineNotice}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ==================== MONTANA ENDORSEMENTS ====================
+    function getEndorsementBadgeClass(val) {
+      if (val === 'Signed Off') return 'bg-emerald-100 text-emerald-950 border-emerald-400';
+      if (val === 'Field Starts') return 'bg-amber-100 text-amber-950 border-amber-400';
+      if (val === 'In-House Practice') return 'bg-purple-100 text-purple-950 border-purple-400';
+      if (val === 'ALS Scope' || val === 'AEMT Scope') return 'bg-blue-100 text-blue-950 border-blue-400';
+      if (val === 'N/A') return 'bg-slate-200 text-slate-700 border-slate-400';
+      return 'bg-slate-100 text-slate-700 border-slate-300';
+    }
+
+    window.cycleEndorsementStage = function(memberId, field) {
+      const m = members.find(x => x.id === memberId);
+      if (!m) return;
+      if (!m.endorsements) m.endorsements = { airway: 'Not Started', meds: 'Not Started', iv: 'Not Started', monitor: 'Not Started', ivPractice: 0, ivField: 0, notes: '' };
+      const cur = m.endorsements[field] || 'Not Started';
+      const idx = ENDORSEMENT_STAGES.indexOf(cur);
+      const next = ENDORSEMENT_STAGES[(idx + 1) % ENDORSEMENT_STAGES.length];
+      m.endorsements[field] = next;
+      saveToCloud();
+      renderEndorsements();
+      showToast(`${m.displayName} — ${field.toUpperCase()}: ${next}`);
+    };
+
+    window.updateIvCounts = function(memberId, type, val) {
+      const m = members.find(x => x.id === memberId);
+      if (!m) return;
+      if (!m.endorsements) m.endorsements = { airway: 'Not Started', meds: 'Not Started', iv: 'Not Started', monitor: 'Not Started', ivPractice: 0, ivField: 0, notes: '' };
+      m.endorsements[type] = Math.max(0, parseInt(val, 10) || 0);
+      saveToCloud();
+      renderEndorsements();
+    };
+
+    window.updateEndorsementNote = function(memberId, noteText) {
+      const m = members.find(x => x.id === memberId);
+      if (!m) return;
+      if (!m.endorsements) m.endorsements = { airway: 'Not Started', meds: 'Not Started', iv: 'Not Started', monitor: 'Not Started', ivPractice: 0, ivField: 0, notes: '' };
+      m.endorsements.notes = noteText;
+      saveToCloud();
+    };
+
+    function renderEndorsements() {
+      const tbody = document.getElementById('endorsementsTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      members.forEach(m => {
+        const e = m.endorsements || { airway: 'Not Started', meds: 'Not Started', iv: 'Not Started', monitor: 'Not Started', ivPractice: 0, ivField: 0, notes: '' };
+        const ivExtra = m.level === 'EMT'
+          ? `<div class="mt-1 flex items-center justify-center gap-1 text-[8px] font-mono">
+               <label>Prac:<input type="number" min="0" max="20" value="${e.ivPractice || 0}" onchange="updateIvCounts('${m.id}', 'ivPractice', this.value)" class="w-9 border border-slate-300 rounded px-1 py-0.2 text-center bg-white">/5</label>
+               <label>Fld:<input type="number" min="0" max="20" value="${e.ivField || 0}" onchange="updateIvCounts('${m.id}', 'ivField', this.value)" class="w-9 border border-slate-300 rounded px-1 py-0.2 text-center bg-white">/5</label>
+             </div>`
+          : '';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 divide-x divide-slate-200';
+        tr.innerHTML = `
+          <td class="py-1.5 px-2.5 font-bold text-slate-950">${m.displayName}</td>
+          <td class="py-1.5 px-1.5 text-center font-semibold">${m.level}</td>
+          <td class="py-1.5 px-2 text-center">
+            <button type="button" onclick="cycleEndorsementStage('${m.id}', 'airway')" class="px-2 py-0.5 rounded border text-[8.5px] font-bold cursor-pointer ${getEndorsementBadgeClass(e.airway)}">${e.airway}</button>
+          </td>
+          <td class="py-1.5 px-2 text-center">
+            <button type="button" onclick="cycleEndorsementStage('${m.id}', 'meds')" class="px-2 py-0.5 rounded border text-[8.5px] font-bold cursor-pointer ${getEndorsementBadgeClass(e.meds)}">${e.meds}</button>
+          </td>
+          <td class="py-1.5 px-2 text-center">
+            <button type="button" onclick="cycleEndorsementStage('${m.id}', 'iv')" class="px-2 py-0.5 rounded border text-[8.5px] font-bold cursor-pointer ${getEndorsementBadgeClass(e.iv)}">${e.iv}</button>
+            ${ivExtra}
+          </td>
+          <td class="py-1.5 px-2 text-center">
+            <button type="button" onclick="cycleEndorsementStage('${m.id}', 'monitor')" class="px-2 py-0.5 rounded border text-[8.5px] font-bold cursor-pointer ${getEndorsementBadgeClass(e.monitor)}">${e.monitor}</button>
+          </td>
+          <td class="py-1 px-2">
+            <input type="text" value="${(e.notes || '').replace(/"/g, '&quot;')}" onchange="updateEndorsementNote('${m.id}', this.value)" placeholder="Add officer notes..." class="w-full border border-slate-300 rounded px-2 py-1 text-[8.5px] bg-white">
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ==================== MEMBER DEPT DRILLS LOG & SELF SERVICE ====================
+    function renderMemberDeptLog() {
+      const tbody = document.getElementById('memberDeptLogBody');
+      const stats = document.getElementById('memberDeptStats');
+      if (!tbody || !currentUser?.memberObj) return;
+      const m = currentUser.memberObj;
+
+      const deptSessions = sessions.filter(s => {
+        if (isPrivateIndividualSession(s)) return false;
+        if (s.date < m.cutoff) return false;
+        return Array.isArray(s.attendees) && s.attendees.some(att => attendeeMatchesMember(att, m));
+      });
+
+      const totHrs = deptSessions.reduce((a, s) => a + (Number(s.hours) || 0), 0);
+      if (stats) stats.innerText = `${deptSessions.length} Dept Drills Attended • ${totHrs.toFixed(2)} hrs`;
+
+      if (deptSessions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-4 px-3 text-center text-slate-600 italic">No department-wide drills matched for <strong>${m.name}</strong> since CE eligible date ${formatDisplayDate(m.cutoff)}.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = deptSessions.map(s => `
+        <tr class="hover:bg-slate-50 divide-x divide-slate-200">
+          <td class="py-1.5 px-2 font-mono font-bold whitespace-nowrap">${formatDisplayDate(s.date)}</td>
+          <td class="py-1.5 px-2 font-bold text-slate-950">${s.title}</td>
+          <td class="py-1.5 px-2 text-slate-700">${s.desc || ''}</td>
+          <td class="py-1.5 px-2">${s.instructors || ''}</td>
+          <td class="py-1.5 px-1.5 text-center font-mono font-black">${Number(s.hours).toFixed(2).replace(/\.00$/, '.0')}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderMemberSelfService() {
+      if (!currentUser?.memberObj) return;
+      const m = currentUser.memberObj;
+      const blsInp = document.getElementById('myBlsExpInput');
+      const recInp = document.getElementById('myRecertExpInput');
+      if (blsInp) blsInp.value = m.blsExp || '';
+      if (recInp) recInp.value = m.recertDue || '';
+
+      const banner = document.getElementById('memberAlertBanner');
+      if (banner) {
+        const blsSt = getExpirationStatus(m.blsExp, 90);
+        const recSt = getExpirationStatus(m.recertDue, 180);
+        const warnings = [];
+        if (blsSt.status === 'expired' || blsSt.status === 'soon') warnings.push(`BLS CPR Card: ${blsSt.label}`);
+        if (recSt.status === 'expired' || recSt.status === 'soon') warnings.push(`NREMT / State Recert: ${recSt.label}`);
+        if (warnings.length > 0) {
+          banner.className = 'bg-red-50 border-2 border-red-400 text-red-950 rounded-xl p-3 text-xs font-bold';
+          banner.innerHTML = `Expiration Alert: ${warnings.join(' • ')}`;
+          banner.classList.remove('hidden');
+        } else {
+          banner.classList.add('hidden');
+        }
+      }
+
+      const endBox = document.getElementById('myEndorsementsSummary');
+      if (endBox) {
+        const e = m.endorsements || {};
+        endBox.innerHTML = `
+          <div class="flex flex-wrap gap-1.5">
+            <span class="px-2 py-0.5 rounded border text-[10px] font-bold ${getEndorsementBadgeClass(e.airway)}">Airway: ${e.airway || 'Not Started'}</span>
+            <span class="px-2 py-0.5 rounded border text-[10px] font-bold ${getEndorsementBadgeClass(e.meds)}">Meds: ${e.meds || 'Not Started'}</span>
+            <span class="px-2 py-0.5 rounded border text-[10px] font-bold ${getEndorsementBadgeClass(e.iv)}">IV/IO: ${e.iv || 'Not Started'}</span>
+            <span class="px-2 py-0.5 rounded border text-[10px] font-bold ${getEndorsementBadgeClass(e.monitor)}">12-Lead: ${e.monitor || 'N/A'}</span>
+          </div>
+          ${m.level === 'EMT' ? `<div class="text-[11px] font-mono text-slate-700">IV Counts: Practice ${e.ivPractice || 0}/5 • Field Starts ${e.ivField || 0}/5</div>` : ''}
+          ${e.notes ? `<div class="text-[11px] text-slate-600">Officer Notes: ${e.notes}</div>` : ''}
+        `;
+      }
+    }
+
+    window.saveMemberOwnDates = function(e) {
+      e.preventDefault();
+      if (!currentUser?.memberObj) return;
+      const blsVal = document.getElementById('myBlsExpInput')?.value;
+      const recVal = document.getElementById('myRecertExpInput')?.value;
+      if (blsVal) currentUser.memberObj.blsExp = blsVal;
+      if (recVal) currentUser.memberObj.recertDue = recVal;
+      saveToCloud();
+      renderMemberSelfService();
+      updateOfficerExpirationAlerts();
+      showToast('Updated your BLS & Recert dates!');
+    };
+
+    // ==================== TRANSCRIPT RENDERING ====================
+    const DEFAULT_TRANSCRIPT_COL_WIDTHS = [9, 24, 20, 15, 14, 9, 9];
+    let transcriptColWidths = [...DEFAULT_TRANSCRIPT_COL_WIDTHS];
+
+    function attachTranscriptColumnResizers() {
+      const table = document.getElementById('transcriptTable');
+      if (!table) return;
+      const ths = [...table.querySelectorAll('thead th')];
+      if (ths.length !== transcriptColWidths.length) return;
+
+      ths.forEach((th, idx) => {
+        th.style.position = 'relative';
+        th.style.width = `${transcriptColWidths[idx]}%`;
+        if (idx === ths.length - 1) return;
+
+        const handle = document.createElement('span');
+        handle.className = 'no-print col-resizer';
+        handle.title = 'Drag to resize column';
+
+        handle.addEventListener('pointerdown', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const startX = e.clientX;
+          const tableWidth = table.getBoundingClientRect().width || 820;
+          const startLeft = transcriptColWidths[idx];
+          const startRight = transcriptColWidths[idx + 1];
+          const minPct = 5;
+
+          handle.classList.add('resizing');
+          handle.setPointerCapture(e.pointerId);
+
+          const onMove = moveEvent => {
+            const deltaPct = ((moveEvent.clientX - startX) / tableWidth) * 100;
+            const maxShiftRight = startRight - minPct;
+            const minShiftLeft = -(startLeft - minPct);
+            const clampedDelta = Math.max(minShiftLeft, Math.min(maxShiftRight, deltaPct));
+
+            transcriptColWidths[idx] = Number((startLeft + clampedDelta).toFixed(2));
+            transcriptColWidths[idx + 1] = Number((startRight - clampedDelta).toFixed(2));
+
+            ths[idx].style.width = `${transcriptColWidths[idx]}%`;
+            ths[idx + 1].style.width = `${transcriptColWidths[idx + 1]}%`;
+          };
+
+          const onUp = () => {
+            handle.classList.remove('resizing');
+            handle.removeEventListener('pointermove', onMove);
+            handle.removeEventListener('pointerup', onUp);
+            handle.removeEventListener('pointercancel', onUp);
+          };
+
+          handle.addEventListener('pointermove', onMove);
+          handle.addEventListener('pointerup', onUp);
+          handle.addEventListener('pointercancel', onUp);
+        });
+
+        th.appendChild(handle);
+      });
+    }
+
+    window.resetTranscriptColumnWidths = function() {
+      transcriptColWidths = [...DEFAULT_TRANSCRIPT_COL_WIDTHS];
+      renderTranscript();
+      showToast('Transcript column widths reset.');
+    };
+
+    window.renderTranscript = function() {
+      const out = document.getElementById('transcriptOutput');
+      if (!out) return;
+
+      const selectedId = currentUser?.role === 'member'
+        ? currentUser.memberObj?.id
+        : (document.getElementById('transcriptMemberSelect')?.value || members[0]?.id);
+      const yrFilter = document.getElementById('transcriptYearSelect')?.value || 'all';
+      const m = members.find(x => x.id === selectedId) || members[0];
+      if (!m) return;
+
+      const isPrivViewer = currentUser?.role === 'officer' && currentUser?.isLeadAdmin;
+      const isSelfViewer = currentUser?.role === 'member' && currentUser?.memberObj?.id === m.id;
+
+      const attended = sessions.filter(s => {
+        if (s.date < m.cutoff) return false;
+        if (yrFilter !== 'all' && !s.date.startsWith(yrFilter)) return false;
+        if (isPrivateIndividualSession(s) && !isPrivViewer && !isSelfViewer) return false;
+        return Array.isArray(s.attendees) && s.attendees.some(att => attendeeMatchesMember(att, m));
+      });
+
+      let totalHrs = 0, pedsHrs = 0, airway = 0, cardio = 0, trauma = 0, medical = 0, ops = 0;
+      let rowsHtml = '';
+
+      if (attended.length === 0) {
+        rowsHtml = '<tr><td colspan="7" class="py-4 text-center text-slate-600 italic">No post-licensure sessions on record for this selection.</td></tr>';
+      } else {
+        attended.forEach(s => {
+          const hrs = Number(s.hours) || 0;
+          const d = s.domains || { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: hrs };
+          totalHrs += hrs;
+          if (s.peds) pedsHrs += hrs;
+          airway += Number(d.airway) || 0;
+          cardio += Number(d.cardio) || 0;
+          trauma += Number(d.trauma) || 0;
+          medical += Number(d.medical) || 0;
+          ops += Number(d.ops) || 0;
+
+          const held = Array.isArray(s.heldAttendees) && s.heldAttendees.some(att => attendeeMatchesMember(att, m));
+          let nremtBadge = '<span class="inline-block whitespace-nowrap bg-slate-100 text-slate-700 border border-slate-300 px-1.5 py-0.5 rounded text-[7.5px] font-bold">Not Yet Posted</span>';
+          if (s.source === 'CAPCE') {
+            nremtBadge = '<span class="inline-block whitespace-nowrap bg-blue-100 text-blue-950 border border-blue-300 px-1.5 py-0.5 rounded text-[7.5px] font-bold">CAPCE Auto</span>';
+          } else if (held) {
+            nremtBadge = '<span class="inline-block whitespace-nowrap bg-amber-100 text-amber-950 border border-amber-400 px-1.5 py-0.5 rounded text-[7.5px] font-bold">Held – Affiliation</span>';
+          } else if (s.nremtUploaded) {
+            const tDate = s.nremtDate ? ` (${formatDisplayDate(s.nremtDate)})` : '';
+            nremtBadge = `<span class="inline-block whitespace-nowrap bg-emerald-100 text-emerald-950 border border-emerald-300 px-1.5 py-0.5 rounded text-[7.5px] font-bold">Added to NREMT${s.nremtBy ? ` • ${s.nremtBy}` : ''}${tDate}</span>`;
+          }
+
+          rowsHtml += `
+            <tr class="hover:bg-blue-50/40 divide-x divide-slate-300 ${s.peds ? 'bg-amber-50/40' : ''} ${s.nremtUploaded ? 'bg-emerald-50/20' : ''}">
+              <td class="py-1 px-1.5 font-mono font-bold text-slate-950 whitespace-nowrap">${formatDisplayDate(s.date)}</td>
+              <td class="py-1 px-1.5 font-bold text-slate-950 leading-snug">${s.title}</td>
+              <td class="py-1 px-1.5 text-slate-800 font-medium leading-snug">${s.desc || ''}</td>
+              <td class="py-1 px-1.5 text-slate-800 font-medium leading-snug">${s.instructors || ''}</td>
+              <td class="py-1 px-1.5 text-center">${nremtBadge}</td>
+              <td class="py-1 px-1 text-center whitespace-nowrap">${s.peds ? `<span class="inline-block whitespace-nowrap bg-amber-200 text-amber-950 border border-amber-400 font-black px-1.5 py-0.5 rounded text-[7.5px]">YES (${hrs}h)</span>` : '<span class="text-slate-500">-</span>'}</td>
+              <td class="py-1 px-1 text-center font-mono font-black text-blue-950 whitespace-nowrap">${hrs.toFixed(2).replace(/\.00$/, '.0')}</td>
+            </tr>
+          `;
+        });
+      }
+
+      out.innerHTML = `
+        <div class="print-card bg-white border-2 border-slate-400 rounded-xl p-5 shadow-md text-slate-900 text-xs">
+          <div class="border-b-2 border-blue-950 pb-2 mb-3 flex justify-between items-start gap-4">
+            <div>
+              <div class="text-[10px] font-black uppercase tracking-widest text-blue-900">Continuing Education Verification Transcript</div>
+              <h2 class="text-xl font-black text-slate-950 uppercase leading-tight">Florence Rural Fire District</h2>
+              <p class="text-[10px] text-slate-800 font-medium">234 Holloway Ln • PO Box 340 • Florence, MT 59833 • (406) 273-2357</p>
+            </div>
+            <div class="text-right border border-blue-300 p-1.5 rounded bg-blue-50 text-[9px] shrink-0">
+              <div class="font-bold text-blue-950">DOCUMENT REF:</div>
+              <div class="font-mono font-black text-blue-900">FRFD-${m.id.toUpperCase()}</div>
+              <div class="text-slate-800 font-semibold mt-0.5">BLS Exp: ${formatDisplayDate(m.blsExp)}</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2.5 p-2 bg-blue-50/60 border border-slate-400 rounded text-[10px]">
+            <div class="sm:border-r sm:border-slate-300 sm:pr-2">
+              <span class="text-blue-950 uppercase font-black text-[8px] block">Provider Name:</span>
+              <span class="font-black text-slate-950 text-xs">${m.displayName}</span>
+              <span class="block mt-0.5 px-1.5 py-0.5 rounded border text-[7.5px] font-bold text-emerald-950 bg-emerald-100 border-emerald-400 w-fit">CE Eligible Since: ${formatDisplayDate(m.cutoff)}</span>
+            </div>
+            <div class="sm:border-r sm:border-slate-300 sm:pr-2">
+              <span class="text-blue-950 uppercase font-black text-[8px] block">Certification Level:</span>
+              <span class="font-bold text-slate-950">${m.level}</span>
+            </div>
+            <div class="sm:border-r sm:border-slate-300 sm:pr-2">
+              <span class="text-blue-950 uppercase font-black text-[8px] block">NREMT Registry / ID:</span>
+              <span class="font-mono font-black text-blue-950">${m.regNum}</span>
+              <span class="block text-[8px] text-slate-800 font-mono font-bold">ID: ${m.emsId}</span>
+            </div>
+            <div>
+              <span class="text-blue-950 uppercase font-black text-[8px] block">Recert Due Date:</span>
+              <span class="font-mono font-bold text-slate-950 text-[9px]">Due: ${formatDisplayDate(m.recertDue)}</span>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table id="transcriptTable" class="w-full min-w-[820px] table-fixed text-left border-collapse border-2 border-slate-500 mb-2.5 text-[9px] print:text-[8px]">
+              <thead class="bg-blue-950 text-white font-bold text-[8px] print:text-[7.5px] uppercase">
+                <tr class="divide-x divide-blue-800">
+                  <th class="py-1.5 px-1.5" style="width:${transcriptColWidths[0]}%">Date</th>
+                  <th class="py-1.5 px-1.5" style="width:${transcriptColWidths[1]}%">Course / Topic Title</th>
+                  <th class="py-1.5 px-1.5" style="width:${transcriptColWidths[2]}%">NREMT Domain</th>
+                  <th class="py-1.5 px-1.5" style="width:${transcriptColWidths[3]}%">Instructor(s)</th>
+                  <th class="py-1.5 px-1.5 text-center" style="width:${transcriptColWidths[4]}%">NREMT Status</th>
+                  <th class="py-1.5 px-1 text-center" style="width:${transcriptColWidths[5]}%">Peds</th>
+                  <th class="py-1.5 px-1 text-center" style="width:${transcriptColWidths[6]}%">Hours</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-300 text-slate-900">${rowsHtml}</tbody>
+              <tfoot class="bg-blue-100 font-bold border-t-2 border-blue-950 text-slate-950 text-[9px] print:text-[8.5px] divide-x divide-blue-200">
+                <tr>
+                  <td colspan="5" class="py-1 px-1.5 text-right uppercase">Total Approved Continuing Education Hours:</td>
+                  <td class="py-1 text-center text-amber-950 font-black whitespace-nowrap">${pedsHrs.toFixed(1)}h Peds</td>
+                  <td class="py-1 px-1 text-center text-blue-950 font-black text-xs print:text-[9.5px] whitespace-nowrap">${totalHrs.toFixed(2)} hrs</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="grid grid-cols-5 gap-1.5 mb-3 text-center text-[8.5px] font-bold">
+            <div class="bg-sky-100 border-2 border-sky-400 p-1 rounded text-sky-950">Airway: ${airway.toFixed(2).replace(/\.00$/, '.0')} hrs</div>
+            <div class="bg-red-100 border-2 border-red-400 p-1 rounded text-red-950">Cardiology: ${cardio.toFixed(2).replace(/\.00$/, '.0')} hrs</div>
+            <div class="bg-amber-100 border-2 border-amber-400 p-1 rounded text-amber-950">Trauma: ${trauma.toFixed(2).replace(/\.00$/, '.0')} hrs</div>
+            <div class="bg-purple-100 border-2 border-purple-400 p-1 rounded text-purple-950">Medical: ${medical.toFixed(2).replace(/\.00$/, '.0')} hrs</div>
+            <div class="bg-emerald-100 border-2 border-emerald-400 p-1 rounded text-emerald-950">Operations: ${ops.toFixed(2).replace(/\.00$/, '.0')} hrs</div>
+          </div>
+
+          <div class="border-t border-slate-400 pt-2 grid grid-cols-2 gap-6 text-[9px]">
+            <div class="flex flex-col justify-between h-14">
+              <span class="font-bold text-slate-900 block uppercase text-[8px]">Training Officer Attestation:</span>
+              <div>
+                <div class="border-b border-slate-900 pb-0.5 flex justify-between items-end">
+                  <span class="font-bold text-slate-950">Jessica Burhenn, AEMT</span>
+                  <span class="text-slate-800 font-mono font-semibold text-[8px]">EMS Training Officer / Lt.</span>
+                </div>
+                <div class="flex justify-between text-[7.5px] text-slate-800 font-semibold mt-0.5">
+                  <span>Authorized Signature</span>
+                  <span>Station 1 Verification</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col justify-between h-14">
+              <span class="font-bold text-slate-900 block uppercase text-[8px]">Agency Record &amp; Audit Archive:</span>
+              <div>
+                <div class="border-b border-slate-900 pb-0.5 flex justify-between items-end">
+                  <span class="font-bold text-slate-950">Florence Rural Fire District</span>
+                  <span class="text-slate-800 font-mono font-semibold text-[8px]">Station 1 Archive</span>
+                </div>
+                <div class="flex justify-between text-[7.5px] text-slate-800 font-semibold mt-0.5">
+                  <span>Physical Rosters On File</span>
+                  <span>NREMT / MT BOME Compliant</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      attachTranscriptColumnResizers();
+    };
+
+    window.updateOfficerPin = function() {
+      const leadVal = (document.getElementById('officerPinSettingInput')?.value || '').trim();
+      const asstVal = (document.getElementById('assistantPinSettingInput')?.value || '').trim();
+      if (leadVal.length < 4 || asstVal.length < 4) {
+        showToast('Each PIN must be at least 4 characters.');
+        return;
+      }
+      officerPin = leadVal;
+      assistantOfficerPin = asstVal;
+      saveToCloud();
+      showToast('Officer PINs updated & synced!');
+    };
+
+    window.updateMemberPin = function(memberId, newPin) {
+      const m = members.find(x => x.id === memberId);
+      if (!m) return;
+      m.pin = (newPin || '1234').trim();
+      saveToCloud();
+      showToast(`Updated login PIN for ${m.name} to ${m.pin}`);
+    };
+
+    window.updateMemberDateOfficer = function(memberId, field, newDate) {
+      const m = members.find(x => x.id === memberId);
+      if (!m || !newDate) return;
+      m[field] = newDate;
+      saveToCloud();
+      updateOfficerExpirationAlerts();
+      renderCrewSummary();
+      showToast(`Updated ${field === 'blsExp' ? 'BLS Expiration' : 'Recert Due Date'} for ${m.name}`);
+    };
+
+    window.runSelfCheck = function() {
+      let repaired = 0;
+      members.forEach(m => {
+        if (!m.pin) { m.pin = '1234'; repaired++; }
+        if (!m.blsExp) { m.blsExp = '2028-02-28'; repaired++; }
+        if (!m.recertDue) { m.recertDue = '2028-03-31'; repaired++; }
+        if (!m.endorsements) {
+          m.endorsements = { airway: 'Not Started', meds: 'Not Started', iv: 'Not Started', monitor: 'Not Started', ivPractice: 0, ivField: 0, notes: '' };
+          repaired++;
+        }
+        if (typeof m.endorsements.ivPractice !== 'number') { m.endorsements.ivPractice = 0; repaired++; }
+        if (typeof m.endorsements.ivField !== 'number') { m.endorsements.ivField = 0; repaired++; }
+      });
+      sessions.forEach(s => {
+        if (!s.domains) { s.domains = { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: Number(s.hours) || 0 }; repaired++; }
+      });
+      if (repaired > 0) saveToCloud();
+      const msg = `Diagnostics Complete: ${sessions.length} sessions, ${members.length} members, 0 broken links${repaired > 0 ? ` (${repaired} fields auto-repaired)` : ''}.`;
+      document.getElementById('healthCheckSummary').innerText = msg;
+      showToast(msg);
+    };
+
+    function renderCrewSummary() {
+      const tbody = document.getElementById('crewSummaryBody');
+      tbody.innerHTML = '';
+
+      members.forEach(m => {
+        const valid = sessions.filter(s => s.attendees.includes(m.name) && s.date >= m.cutoff);
+        const h2025 = valid.filter(s => s.date.startsWith('2025')).reduce((a, s) => a + Number(s.hours), 0);
+        const h2026 = valid.filter(s => s.date.startsWith('2026')).reduce((a, s) => a + Number(s.hours), 0);
+        const tot = h2025 + h2026;
+
+        const blsSt = getExpirationStatus(m.blsExp, 90);
+        const recSt = getExpirationStatus(m.recertDue, 180);
+        const blsCls = blsSt.status === 'expired' ? 'bg-red-100 text-red-950 border-red-400' : blsSt.status === 'soon' ? 'bg-amber-100 text-amber-950 border-amber-400' : 'bg-white border-slate-300';
+        const recCls = recSt.status === 'expired' ? 'bg-red-100 text-red-950 border-red-400' : recSt.status === 'soon' ? 'bg-amber-100 text-amber-950 border-amber-400' : 'bg-white border-slate-300';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 divide-x divide-slate-200';
+        tr.innerHTML = `
+          <td class="py-1.5 px-2.5 font-black text-slate-900">${m.displayName}</td>
+          <td class="py-1.5 px-1.5 text-center font-semibold">${m.level}</td>
+          <td class="py-1.5 px-2 text-center font-mono text-blue-900 font-bold">${m.regNum}</td>
+          <td class="py-1.5 px-2 text-center font-mono font-bold bg-blue-50/40">${formatDisplayDate(m.cutoff)}</td>
+          <td class="py-1.5 px-1.5 text-center font-mono font-bold">${h2025.toFixed(2)}</td>
+          <td class="py-1.5 px-1.5 text-center font-mono font-bold">${h2026.toFixed(2)}</td>
+          <td class="py-1.5 px-1.5 text-center font-mono font-black text-blue-950 bg-blue-50">${tot.toFixed(2)}</td>
+          <td class="py-1 px-1.5 text-center">
+            <input type="date" value="${m.blsExp || ''}" onchange="updateMemberDateOfficer('${m.id}', 'blsExp', this.value)" class="border rounded px-1 py-0.5 font-mono text-[8.5px] font-bold ${blsCls}">
+          </td>
+          <td class="py-1 px-1.5 text-center">
+            <input type="date" value="${m.recertDue || ''}" onchange="updateMemberDateOfficer('${m.id}', 'recertDue', this.value)" class="border rounded px-1 py-0.5 font-mono text-[8.5px] font-bold ${recCls}">
+          </td>
+          <td class="no-print py-1 px-1.5 text-center">
+            <input type="text" value="${m.pin || '1234'}" maxlength="6" onchange="updateMemberPin('${m.id}', this.value)" class="w-14 border border-slate-300 rounded px-1 py-0.5 font-mono text-center font-bold bg-slate-50">
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.openNewMemberModal = function() {
+      document.getElementById('memberModal').classList.remove('hidden');
+    };
+    window.closeNewMemberModal = function() {
+      document.getElementById('memberModal').classList.add('hidden');
+    };
+    window.saveNewMember = function(e) {
+      e.preventDefault();
+      const name = document.getElementById('mName').value.trim();
+      const level = document.getElementById('mLevel').value;
+      const regNum = document.getElementById('mReg').value.trim() || 'Pending Affiliation';
+      const cutoff = document.getElementById('mCutoff').value;
+      const recertRaw = document.getElementById('mRecert').value.trim();
+      const recertDue = recertRaw.includes('/') ? recertRaw.split('/').reverse().join('-') : recertRaw;
+      const pin = document.getElementById('mPin').value.trim() || '1234';
+      const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+      members.push({
+        id,
+        name,
+        displayName: name,
+        level,
+        regNum,
+        emsId: 'NEW-ROSTER',
+        cutoff,
+        cycle: `${formatDisplayDate(cutoff)} – ${recertRaw}`,
+        recertDue,
+        blsExp: '2028-02-28',
+        portalStatus: 'Affiliated',
+        pin,
+        endorsements: {
+          airway: level === 'Paramedic' ? 'ALS Scope' : level === 'AEMT' ? 'AEMT Scope' : 'Not Started',
+          meds: level === 'Paramedic' ? 'ALS Scope' : level === 'AEMT' ? 'AEMT Scope' : 'Not Started',
+          iv: level === 'Paramedic' ? 'ALS Scope' : level === 'AEMT' ? 'AEMT Scope' : 'In-House Practice',
+          monitor: level === 'Paramedic' ? 'ALS Scope' : level === 'AEMT' ? 'AEMT Scope' : 'N/A',
+          ivPractice: level === 'EMT' ? 0 : 5,
+          ivField: level === 'EMT' ? 0 : 5,
+          notes: ''
+        }
+      });
+
+      saveToCloud();
+      populateMemberDropdowns();
+      renderCrewSummary();
+      closeNewMemberModal();
+      e.target.reset();
+      showToast(`Added ${name} (PIN: ${pin}) & synced to cloud!`);
+    };
+
+    // ==================== BACKUP & RESTORE ====================
+    window.exportBackup = function() {
+      const payload = JSON.stringify({ exportedAt: new Date().toISOString(), members, sessions, submissions, officerPin, assistantOfficerPin }, null, 2);
+      const blob = new Blob([payload], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `FRFD_EMS_CE_Backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Backup JSON downloaded!');
+    };
+
+    window.importBackup = function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (parsed.members && parsed.sessions) {
+            members = parsed.members;
+            sessions = parsed.sessions;
+            if (Array.isArray(parsed.submissions)) submissions = parsed.submissions;
+            if (parsed.officerPin) officerPin = parsed.officerPin;
+            if (parsed.assistantOfficerPin) assistantOfficerPin = parsed.assistantOfficerPin;
+            saveToCloud();
+            populateMemberDropdowns();
+            refreshAllViews();
+            showToast('Backup restored & synced across portal!');
+          }
+        } catch (err) {
+          showToast('Invalid backup file.');
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    // Initialize Cloud Sync on Load
+    initCloudSync();
+  </script>
+</body>
+</html>
