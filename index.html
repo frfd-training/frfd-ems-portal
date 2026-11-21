@@ -82,18 +82,13 @@
       <!-- Officer Login Form -->
       <form id="officerLoginForm" onsubmit="handleOfficerLogin(event)" class="p-6 space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Select Officer Name</label>
-          <select id="loginOfficerName" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600">
-            <option value="Jessica Burhenn, AEMT (EMS Lt.)">Jessica Burhenn, AEMT (EMS Lt.)</option>
-            <option value="Matthew Roth, Paramedic">Matthew Roth, Paramedic</option>
-            <option value="William Boswell, EMT">William Boswell, EMT</option>
-            <option value="Authorized Training Officer">Authorized Training Officer</option>
-          </select>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Officer Username or Account ID</label>
+          <input type="text" id="loginOfficerUsername" required autocomplete="username" placeholder="Enter Officer username or ID" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-semibold bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600">
+          <p class="text-[10px] text-slate-500 mt-1">Enter your assigned Officer username (or account code) and password/PIN.</p>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Officer Access PIN</label>
-          <input type="password" inputmode="numeric" id="loginOfficerPin" required placeholder="Enter Officer PIN (Default: 1911)" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-mono tracking-widest text-center focus:ring-2 focus:ring-blue-600 outline-none">
-          <p class="text-[10px] text-slate-500 mt-1 text-center">Lead Admin PIN: <strong class="font-mono text-slate-700">1911</strong> • Assistant Officer PIN: <strong class="font-mono text-slate-700">2026</strong></p>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Officer Password / Access PIN</label>
+          <input type="password" id="loginOfficerPin" required autocomplete="current-password" placeholder="Enter Officer Password / PIN" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-mono tracking-wider text-center focus:ring-2 focus:ring-blue-600 outline-none">
         </div>
         <div id="officerLoginError" class="hidden text-xs font-bold text-red-700 bg-red-50 border border-red-200 p-2.5 rounded-lg text-center"></div>
         <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl shadow-lg text-xs uppercase tracking-wider transition cursor-pointer">
@@ -104,13 +99,13 @@
       <!-- Crew Member Login Form -->
       <form id="memberLoginForm" onsubmit="handleMemberLogin(event)" class="hidden p-6 space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Select Your Name</label>
-          <select id="loginMemberSelect" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-600"></select>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Member Username or Provider ID</label>
+          <input type="text" id="loginMemberUsername" required autocomplete="username" placeholder="Enter member username or Provider ID" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-semibold bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-600">
+          <p class="text-[10px] text-slate-500 mt-1">Enter your member username, last name, or NREMT/Provider ID.</p>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Personal 4-Digit Member PIN</label>
-          <input type="password" inputmode="numeric" id="loginMemberPin" required placeholder="Enter your PIN (Default: 1234)" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-mono tracking-widest text-center focus:ring-2 focus:ring-emerald-600 outline-none">
-          <p class="text-[10px] text-slate-500 mt-1 text-center">Default Member PIN is <strong class="font-mono text-slate-700">1234</strong> unless updated by your Training Officer.</p>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Personal Password / Member PIN</label>
+          <input type="password" id="loginMemberPin" required autocomplete="current-password" placeholder="Enter your Password / PIN" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-mono tracking-wider text-center focus:ring-2 focus:ring-emerald-600 outline-none">
         </div>
         <div id="memberLoginError" class="hidden text-xs font-bold text-red-700 bg-red-50 border border-red-200 p-2.5 rounded-lg text-center"></div>
         <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl shadow-lg text-xs uppercase tracking-wider transition cursor-pointer">
@@ -363,7 +358,7 @@
               </div>
               <div>
                 <label class="block font-bold text-slate-700 mb-1">Instructor(s) *</label>
-                <input type="text" id="fInstructor" required placeholder="e.g. Roth, Matthew" class="w-full border border-slate-300 rounded-lg px-3 py-2">
+                <input type="text" id="fInstructor" required placeholder="Enter lead instructor name" class="w-full border border-slate-300 rounded-lg px-3 py-2">
               </div>
             </div>
 
@@ -759,6 +754,16 @@
     let activeLedgerYear = '2026';
     let pendingProofDataUrl = '';
     let expandedExpiryAlert = false;
+    const failedAttempts = {};
+    const LOCKOUT_THRESHOLD = 5;
+    const LOCKOUT_MS = 60000;
+
+    const OFFICER_ACCOUNTS = [
+      { usernames: ['jburhenn', 'j.burhenn', 'burhenn', 'frfd-lt', 'officer-jb'], displayName: 'Jessica Burhenn, AEMT (EMS Lt.)', tier: 'lead' },
+      { usernames: ['mroth', 'm.roth', 'roth', 'frfd-pm', 'officer-mr'], displayName: 'Matthew Roth, Paramedic', tier: 'lead' },
+      { usernames: ['wboswell', 'w.boswell', 'boswell', 'frfd-emt', 'officer-wb'], displayName: 'William Boswell, EMT', tier: 'assistant' },
+      { usernames: ['frfd-officer', 'officer', 'training-officer', 'admin'], displayName: 'Authorized Training Officer', tier: 'lead' }
+    ];
 
     const ENDORSEMENT_STAGES = ['Not Started', 'In-House Practice', 'Field Starts', 'Signed Off', 'N/A'];
 
@@ -985,30 +990,71 @@
         }
       }
 
-      if (!loaded) {
-        saveToCloud();
-      }
-
-      populateMemberDropdowns();
       if (badge) {
-        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Station Cloud Sync Ready';
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span>${loaded ? 'Station Sync Ready' : 'Default Roster Loaded'}`;
+      }
+      populateMemberDropdowns();
+      updatePendingBadges();
+    }
+
+    function checkLockout(bucketKey, errEl) {
+      const state = failedAttempts[bucketKey];
+      if (!state || !state.lockedUntil) return false;
+      const now = Date.now();
+      if (now < state.lockedUntil) {
+        const secs = Math.ceil((state.lockedUntil - now) / 1000);
+        if (errEl) {
+          errEl.innerText = `Too many failed attempts. Please wait ${secs}s before trying again.`;
+          errEl.classList.remove('hidden');
+        }
+        return true;
+      }
+      failedAttempts[bucketKey] = { count: 0, lockedUntil: 0 };
+      return false;
+    }
+
+    function recordFailedAttempt(bucketKey, errEl, baseMessage) {
+      const now = Date.now();
+      const cur = failedAttempts[bucketKey] || { count: 0, lockedUntil: 0 };
+      const count = cur.count + 1;
+      if (count >= LOCKOUT_THRESHOLD) {
+        failedAttempts[bucketKey] = { count: 0, lockedUntil: now + LOCKOUT_MS };
+        if (errEl) {
+          errEl.innerText = 'Too many failed login attempts. Locked for 60 seconds for security.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+      failedAttempts[bucketKey] = { count, lockedUntil: 0 };
+      if (errEl) {
+        errEl.innerText = `${baseMessage} (${LOCKOUT_THRESHOLD - count} attempt${LOCKOUT_THRESHOLD - count === 1 ? '' : 's'} remaining before temporary lockout).`;
+        errEl.classList.remove('hidden');
       }
     }
 
+    function clearFailedAttempts(bucketKey) {
+      delete failedAttempts[bucketKey];
+    }
+
+    function findMatchingMemberByUsername(rawInput) {
+      const key = (rawInput || '').trim().toLowerCase();
+      if (!key) return null;
+      return members.find(m => {
+        const idMatch = (m.id || '').toLowerCase() === key;
+        const regMatch = (m.regNum || '').toLowerCase() === key;
+        const emsIdMatch = (m.emsId || '').toLowerCase() === key;
+        const fullNameMatch = (m.name || '').toLowerCase() === key || (m.displayName || '').toLowerCase() === key;
+        const parts = (m.name || '').split(',');
+        const last = (parts[0] || '').trim().toLowerCase();
+        const first = (parts[1] || '').trim().split(/\s+/)[0]?.toLowerCase() || '';
+        const compactUser = first && last ? `${first}${last}` : '';
+        const dottedUser = first && last ? `${first}.${last}` : '';
+        return idMatch || regMatch || emsIdMatch || fullNameMatch || last === key || compactUser === key || dottedUser === key;
+      }) || null;
+    }
+
     function populateMemberDropdowns() {
-      const loginSel = document.getElementById('loginMemberSelect');
       const transSel = document.getElementById('transcriptMemberSelect');
-      if (loginSel) {
-        const prev = loginSel.value;
-        loginSel.innerHTML = '';
-        members.forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m.id;
-          opt.textContent = `${m.displayName} (${m.level})`;
-          loginSel.appendChild(opt);
-        });
-        if (prev && [...loginSel.options].some(o => o.value === prev)) loginSel.value = prev;
-      }
       if (transSel) {
         const prev = transSel.value;
         transSel.innerHTML = '';
@@ -1047,39 +1093,58 @@
 
     window.handleOfficerLogin = function(e) {
       e.preventDefault();
-      const name = document.getElementById('loginOfficerName')?.value || 'Training Officer';
+      const rawUser = (document.getElementById('loginOfficerUsername')?.value || '').trim();
       const pin = (document.getElementById('loginOfficerPin')?.value || '').trim();
       const errEl = document.getElementById('officerLoginError');
+      const key = rawUser.toLowerCase();
+
+      if (checkLockout('officer', errEl)) return;
+
+      const matchedAcc = OFFICER_ACCOUNTS.find(acc =>
+        acc.usernames.includes(key) || acc.displayName.toLowerCase() === key
+      );
+
+      if (!matchedAcc) {
+        recordFailedAttempt('officer', errEl, 'Unknown Officer username or account ID.');
+        return;
+      }
 
       if (pin === officerPin) {
+        clearFailedAttempts('officer');
         errEl?.classList.add('hidden');
-        currentUser = { role: 'officer', isLeadAdmin: true, name };
+        currentUser = { role: 'officer', isLeadAdmin: true, name: matchedAcc.displayName };
         enterApp();
       } else if (pin === assistantOfficerPin) {
+        clearFailedAttempts('officer');
         errEl?.classList.add('hidden');
-        currentUser = { role: 'officer', isLeadAdmin: false, name };
+        currentUser = { role: 'officer', isLeadAdmin: false, name: matchedAcc.displayName };
         enterApp();
-      } else if (errEl) {
-        errEl.innerText = 'Invalid Officer PIN. Lead Admin default is 1911; Assistant Officer default is 2026.';
-        errEl.classList.remove('hidden');
+      } else {
+        recordFailedAttempt('officer', errEl, 'Invalid Officer username or password/PIN.');
       }
     };
 
     window.handleMemberLogin = function(e) {
       e.preventDefault();
-      const memberId = document.getElementById('loginMemberSelect')?.value;
+      const rawUser = (document.getElementById('loginMemberUsername')?.value || '').trim();
       const pin = (document.getElementById('loginMemberPin')?.value || '').trim();
       const errEl = document.getElementById('memberLoginError');
-      const m = members.find(x => x.id === memberId);
 
-      if (!m) return;
+      if (checkLockout('member', errEl)) return;
+
+      const m = findMatchingMemberByUsername(rawUser);
+      if (!m) {
+        recordFailedAttempt('member', errEl, 'Member account not found. Check your username or Provider/NREMT ID.');
+        return;
+      }
+
       if (pin === (m.pin || '1234') || pin === officerPin) {
+        clearFailedAttempts('member');
         errEl?.classList.add('hidden');
         currentUser = { role: 'member', isLeadAdmin: false, name: m.displayName, memberObj: m };
         enterApp();
-      } else if (errEl) {
-        errEl.innerText = 'Incorrect PIN. Default member PIN is 1234 or ask your Training Officer for a reset.';
-        errEl.classList.remove('hidden');
+      } else {
+        recordFailedAttempt('member', errEl, 'Incorrect username or password/PIN.');
       }
     };
 
