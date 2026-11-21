@@ -88,6 +88,9 @@
           <button id="sandboxToggleBtn" type="button" onclick="toggleSandboxMode()" class="rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 px-3 py-1.5 text-xs font-extrabold">
             Sandbox Demo: OFF
           </button>
+          <button id="recoverLegacyBtn" type="button" onclick="manualRecoverLegacyData()" class="rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 px-3 py-1.5 text-xs font-extrabold">
+            Recover Previous Data
+          </button>
           <button id="backupUtilityBtn" type="button" onclick="exportBackupJson()" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 text-xs font-bold">
             Backup
           </button>
@@ -326,9 +329,14 @@
               Unmark Selected
             </button>
           </div>
-          <button type="button" onclick="startNewSessionForm()" class="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-bold">
-            + Log New Training Session
-          </button>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="manualRecoverLegacyData()" class="rounded-lg border border-sky-300 bg-sky-50 hover:bg-sky-100 text-sky-950 px-3 py-1.5 text-xs font-extrabold">
+              Recover Previous Site Trainings &amp; Crew
+            </button>
+            <button type="button" onclick="startNewSessionForm()" class="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-bold">
+              + Log New Training Session
+            </button>
+          </div>
         </div>
 
         <!-- Ledger Table -->
@@ -1225,6 +1233,96 @@
       return sandboxMode ? SANDBOX_STORAGE_KEY : LIVE_STORAGE_KEY;
     }
 
+    function mergeRecoveredLegacyRecords(targetState) {
+      if (sandboxMode) return { recoveredMembers: 0, recoveredSessions: 0 };
+      let recoveredMembers = 0;
+      let recoveredSessions = 0;
+
+      const memberNames = new Set((targetState.members || []).map(m => String(m.name || '').toLowerCase().trim()));
+      const sessionKeys = new Set((targetState.sessions || []).map(s => `${s.id}|${s.date}|${String(s.title || '').toLowerCase().trim()}`));
+
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k || k === LIVE_STORAGE_KEY || k === SANDBOX_STORAGE_KEY || k === REMEMBER_LOGIN_KEY) continue;
+          if (!k.toLowerCase().includes('frfd') && !k.toLowerCase().includes('ems')) continue;
+
+          const val = localStorage.getItem(k);
+          if (!val || val.trim()[0] !== '{') continue;
+          let parsed = null;
+          try {
+            parsed = JSON.parse(val);
+          } catch (_) {
+            continue;
+          }
+          if (!parsed || typeof parsed !== 'object') continue;
+
+          if (Array.isArray(parsed.members)) {
+            parsed.members.forEach(m => {
+              const normName = String(m?.name || '').toLowerCase().trim();
+              if (!normName || memberNames.has(normName)) return;
+              memberNames.add(normName);
+              targetState.members.push({
+                ...m,
+                id: m.id || ('m-rec-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6)),
+                status: m.status === 'alumni' ? 'alumni' : 'active',
+                officerRole: m.officerRole || 'none',
+                officerUser: m.officerUser || '',
+                officerPin: m.officerPin || '',
+                permissions: m.permissions || {},
+                endorsements: Array.isArray(m.endorsements) ? m.endorsements : ['AHA BLS']
+              });
+              recoveredMembers++;
+            });
+          }
+
+          if (Array.isArray(parsed.sessions)) {
+            parsed.sessions.forEach(s => {
+              const sig = `${s?.id}|${s?.date}|${String(s?.title || '').toLowerCase().trim()}`;
+              const altSig = (targetState.sessions || []).some(ex => ex.date === s?.date && String(ex.title || '').toLowerCase().trim() === String(s?.title || '').toLowerCase().trim());
+              if (!s?.title || sessionKeys.has(sig) || altSig) return;
+              sessionKeys.add(sig);
+              targetState.sessions.push({
+                ...s,
+                id: s.id || ('s-rec-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6)),
+                scope: s.scope === 'independent' ? 'independent' : 'department',
+                attendees: Array.isArray(s.attendees) ? s.attendees : [],
+                heldAttendees: applyAutoHoldDefaults(s.attendees || [], s.heldAttendees || []),
+                domains: {
+                  airway: Number(s.domains?.airway || 0),
+                  cardio: Number(s.domains?.cardio || 0),
+                  trauma: Number(s.domains?.trauma || 0),
+                  medical: Number(s.domains?.medical || 0),
+                  ops: Number(s.domains?.ops || 0)
+                },
+                nremtUploaded: Boolean(s.nremtUploaded)
+              });
+              recoveredSessions++;
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Legacy storage scan error:', err);
+      }
+
+      return { recoveredMembers, recoveredSessions };
+    }
+
+    function manualRecoverLegacyData() {
+      if (sandboxMode) {
+        showToast('Switch off Sandbox Demo first to recover live site records.');
+        return;
+      }
+      const res = mergeRecoveredLegacyRecords(state);
+      if (res.recoveredMembers > 0 || res.recoveredSessions > 0) {
+        saveToCloud();
+        renderCurrentView();
+        showToast(`Recovered ${res.recoveredSessions} trainings & ${res.recoveredMembers} crew members from previous site storage!`);
+      } else {
+        showToast('All browser storage records are already loaded. Use Restore if loading a .json backup file.');
+      }
+    }
+
     function loadStateFromStorage() {
       try {
         const key = getActiveStorageKey();
@@ -1233,6 +1331,9 @@
           state = normalizeState(JSON.parse(rawText));
         } else {
           state = normalizeState({});
+        }
+        const recovered = mergeRecoveredLegacyRecords(state);
+        if (!rawText || recovered.recoveredMembers > 0 || recovered.recoveredSessions > 0) {
           saveToCloud();
         }
       } catch (err) {
