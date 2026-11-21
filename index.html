@@ -70,6 +70,40 @@
     .col-resizer.resizing {
       background-color: rgba(56, 189, 248, 0.75);
     }
+    @keyframes tourPulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 0 4px #f59e0b, 0 0 0 8px rgba(245, 158, 11, 0.35), 0 0 36px 8px rgba(251, 191, 36, 0.85), 0 18px 40px rgba(15, 23, 42, 0.55);
+      }
+      50% {
+        box-shadow: 0 0 0 5px #fbbf24, 0 0 0 12px rgba(245, 158, 11, 0.5), 0 0 48px 14px rgba(245, 158, 11, 0.95), 0 22px 48px rgba(15, 23, 42, 0.65);
+      }
+    }
+    .tour-highlight-ring {
+      position: relative;
+      z-index: 45;
+      outline: 3px solid #fef08a;
+      outline-offset: 2px;
+      background-color: rgba(254, 249, 195, 0.22);
+      border-radius: 0.75rem;
+      animation: tourPulseGlow 1.5s infinite ease-in-out;
+    }
+    .tour-highlight-ring::after {
+      content: "ACTIVE STEP";
+      position: absolute;
+      top: -11px;
+      right: 10px;
+      background: #f59e0b;
+      color: #0f172a;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      padding: 1px 7px;
+      border-radius: 9999px;
+      border: 1.5px solid #fef08a;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+      z-index: 46;
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col pb-20 sm:pb-0">
@@ -154,41 +188,59 @@
 
         <!-- Officer Desktop Navigation Tabs -->
         <nav id="officerDesktopNav" class="hidden sm:flex flex-wrap items-center gap-1 bg-slate-800 p-1 rounded-xl">
-          <button onclick="switchTab('ledger')" id="tab-ledger" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow cursor-pointer">
-            Master Ledgers
+          <button onclick="switchTab('ledger')" id="tab-ledger" class="nav-btn px-2.5 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow cursor-pointer">
+            Ledgers
           </button>
-          <button onclick="switchTab('add')" id="tab-add" class="nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
-            + Add / Scan Roster
+          <button onclick="switchTab('add')" id="tab-add" class="nav-btn px-2.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
+            + Scan
           </button>
-          <button onclick="switchTab('approvals')" id="tab-approvals" class="admin-only-nav nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer flex items-center gap-1">
+          <button onclick="switchTab('calendar')" id="tab-calendar" class="nav-btn px-2.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
+            Calendar
+          </button>
+          <button onclick="switchTab('approvals')" id="tab-approvals" class="admin-only-nav nav-btn px-2.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer flex items-center gap-1">
             Approvals <span id="pendingBadgeDesktop" class="hidden bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 rounded-full">0</span>
           </button>
-          <button onclick="switchTab('endorsements')" id="tab-endorsements" class="admin-only-nav nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
+          <button onclick="switchTab('messages')" id="tab-messages" class="admin-only-nav nav-btn px-2.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer flex items-center gap-1">
+            Inbox &amp; Alerts <span id="inboxBadgeDesktop" class="hidden bg-sky-400 text-slate-950 text-[10px] font-black px-1.5 rounded-full">0</span>
+          </button>
+          <button onclick="switchTab('endorsements')" id="tab-endorsements" class="admin-only-nav nav-btn px-2.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
             Endorsements
           </button>
-          <button onclick="switchTab('transcripts')" id="tab-transcripts" class="admin-only-nav nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
+          <button onclick="switchTab('transcripts')" id="tab-transcripts" class="admin-only-nav nav-btn px-2.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
             Transcripts
           </button>
-          <button onclick="switchTab('roster')" id="tab-roster" class="admin-only-nav nav-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer flex items-center gap-1">
-            Crew &amp; Alerts <span id="expiryBadgeDesktop" class="hidden bg-red-500 text-white text-[10px] font-black px-1.5 rounded-full">0</span>
+          <button onclick="switchTab('roster')" id="tab-roster" class="admin-only-nav nav-btn px-2.5 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer flex items-center gap-1">
+            Crew <span id="expiryBadgeDesktop" class="hidden bg-red-500 text-white text-[10px] font-black px-1.5 rounded-full">0</span>
           </button>
         </nav>
 
         <!-- Member Desktop Navigation Tabs -->
         <nav id="memberDesktopNav" class="hidden sm:flex flex-wrap items-center gap-1.5 bg-slate-800 p-1 rounded-xl">
           <button onclick="switchTab('transcripts')" id="mtab-desk-transcripts" class="m-desk-btn px-3 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-600 text-white shadow cursor-pointer">
-            My Transcript &amp; Cards
+            My Transcript &amp; Checklist
+          </button>
+          <button onclick="switchTab('calendar')" id="mtab-desk-calendar" class="m-desk-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
+            Training Calendar
           </button>
           <button onclick="switchTab('memberDeptLog')" id="mtab-desk-memberDeptLog" class="m-desk-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
-            Dept Drills I Attended
+            Dept Drills Attended
           </button>
           <button onclick="switchTab('memberSubmit')" id="mtab-desk-memberSubmit" class="m-desk-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer">
-            + Submit Outside Training
+            + Submit CE
+          </button>
+          <button onclick="switchTab('messages')" id="mtab-desk-messages" class="m-desk-btn px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700 cursor-pointer flex items-center gap-1">
+            Message Officer <span id="memberMsgBadgeDesktop" class="hidden bg-sky-400 text-slate-950 text-[10px] font-black px-1.5 rounded-full">0</span>
           </button>
         </nav>
 
         <!-- Utility Actions -->
         <div class="flex items-center gap-1.5 sm:gap-2">
+          <button id="sandboxToggleBtn" onclick="toggleSandboxMode()" title="Practice & demo safely without changing live data" class="hidden bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/60 text-amber-200 text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer">
+            Sandbox Demo: OFF
+          </button>
+          <button id="previewMemberBtn" onclick="openMemberPreviewPicker()" title="Preview what a crew member sees" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer">
+            Preview Member View
+          </button>
           <button id="backupBtn" onclick="exportBackup()" title="Download JSON backup" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition cursor-pointer">
             Backup
           </button>
@@ -204,42 +256,75 @@
           </button>
         </div>
       </div>
+
+      <!-- SANDBOX MODE ACTIVE BANNER -->
+      <div id="sandboxBanner" class="hidden bg-amber-500 text-slate-950 px-4 py-1.5 text-xs font-black flex flex-wrap items-center justify-between gap-2">
+        <span>SANDBOX DEMO MODE ACTIVE — Changes made here are temporary for training &amp; department demos and will NOT alter live records.</span>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="resetSandboxData()" class="bg-slate-900 text-white px-2.5 py-0.5 rounded text-[11px] font-bold cursor-pointer">Reset Demo Data</button>
+          <button type="button" onclick="toggleSandboxMode()" class="bg-white text-slate-950 px-2.5 py-0.5 rounded text-[11px] font-black cursor-pointer">Exit Sandbox</button>
+        </div>
+      </div>
+
+      <!-- OFFICER PREVIEWING MEMBER BANNER -->
+      <div id="memberPreviewBanner" class="hidden bg-indigo-600 text-white px-4 py-2 text-xs font-bold flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="bg-white text-indigo-950 px-2 py-0.5 rounded text-[10px] font-black uppercase">Member View Preview</span>
+          <span>Viewing portal as:</span>
+          <select id="previewMemberSwitcher" onchange="switchPreviewMember(this.value)" class="bg-indigo-900 text-white border border-indigo-400 rounded px-2 py-0.5 text-xs font-bold"></select>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="startMemberWalkthrough(true)" class="bg-indigo-800 hover:bg-indigo-950 border border-indigo-400 px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer">Launch Member Tour</button>
+          <button type="button" onclick="exitMemberPreview()" class="bg-white text-indigo-950 px-3 py-1 rounded text-[11px] font-black cursor-pointer">Return to Officer Portal</button>
+        </div>
+      </div>
     </header>
 
     <!-- Officer Mobile Bottom Bar -->
-    <nav id="officerMobileNav" class="no-print sm:hidden fixed bottom-0 inset-x-0 bg-slate-900 text-white border-t border-slate-700 z-40 grid grid-cols-6 gap-0.5 p-1 shadow-2xl">
-      <button onclick="switchTab('ledger')" id="mtab-ledger" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg bg-blue-600 text-white text-[9.5px] font-bold">
+    <nav id="officerMobileNav" class="no-print sm:hidden fixed bottom-0 inset-x-0 bg-slate-900 text-white border-t border-slate-700 z-40 grid grid-cols-7 gap-0.5 p-1 shadow-2xl">
+      <button onclick="switchTab('ledger')" id="mtab-ledger" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg bg-blue-600 text-white text-[9px] font-bold">
         <span>Ledgers</span>
       </button>
-      <button onclick="switchTab('add')" id="mtab-add" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9.5px] font-bold">
+      <button onclick="switchTab('add')" id="mtab-add" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9px] font-bold">
         <span>+ Scan</span>
       </button>
-      <button onclick="switchTab('approvals')" id="mtab-approvals" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9.5px] font-bold relative">
+      <button onclick="switchTab('calendar')" id="mtab-calendar" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9px] font-bold">
+        <span>Calendar</span>
+      </button>
+      <button onclick="switchTab('approvals')" id="mtab-approvals" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9px] font-bold relative">
         <span>Approve</span>
-        <span id="pendingBadgeMobile" class="hidden absolute top-0.5 right-1 bg-amber-500 text-slate-950 text-[8px] font-black px-1 rounded-full">0</span>
+        <span id="pendingBadgeMobile" class="hidden absolute top-0.5 right-0.5 bg-amber-500 text-slate-950 text-[8px] font-black px-1 rounded-full">0</span>
       </button>
-      <button onclick="switchTab('endorsements')" id="mtab-endorsements" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9.5px] font-bold">
-        <span>Endorse</span>
+      <button onclick="switchTab('messages')" id="mtab-messages" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9px] font-bold relative">
+        <span>Inbox</span>
+        <span id="inboxBadgeMobile" class="hidden absolute top-0.5 right-0.5 bg-sky-400 text-slate-950 text-[8px] font-black px-1 rounded-full">0</span>
       </button>
-      <button onclick="switchTab('transcripts')" id="mtab-transcripts" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9.5px] font-bold">
+      <button onclick="switchTab('transcripts')" id="mtab-transcripts" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9px] font-bold">
         <span>Transcript</span>
       </button>
-      <button onclick="switchTab('roster')" id="mtab-roster" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9.5px] font-bold relative">
+      <button onclick="switchTab('roster')" id="mtab-roster" class="mnav-btn flex flex-col items-center justify-center py-1.5 rounded-lg text-slate-300 text-[9px] font-bold relative">
         <span>Crew</span>
-        <span id="expiryBadgeMobile" class="hidden absolute top-0.5 right-1 bg-red-500 text-white text-[8px] font-black px-1 rounded-full">0</span>
+        <span id="expiryBadgeMobile" class="hidden absolute top-0.5 right-0.5 bg-red-500 text-white text-[8px] font-black px-1 rounded-full">0</span>
       </button>
     </nav>
 
     <!-- Member Mobile Bottom Bar -->
-    <nav id="memberMobileNav" class="no-print hidden sm:hidden fixed bottom-0 inset-x-0 bg-slate-900 text-white border-t border-slate-700 z-40 grid grid-cols-3 gap-1 p-1.5 shadow-2xl">
-      <button onclick="switchTab('transcripts')" id="mmtab-transcripts" class="mmnav-btn flex flex-col items-center justify-center py-2 rounded-lg bg-emerald-600 text-white text-[11px] font-bold">
-        <span>My Transcript</span>
+    <nav id="memberMobileNav" class="no-print hidden sm:hidden fixed bottom-0 inset-x-0 bg-slate-900 text-white border-t border-slate-700 z-40 grid grid-cols-5 gap-0.5 p-1 shadow-2xl">
+      <button onclick="switchTab('transcripts')" id="mmtab-transcripts" class="mmnav-btn flex flex-col items-center justify-center py-2 rounded-lg bg-emerald-600 text-white text-[9.5px] font-bold">
+        <span>Transcript</span>
       </button>
-      <button onclick="switchTab('memberDeptLog')" id="mmtab-memberDeptLog" class="mmnav-btn flex flex-col items-center justify-center py-2 rounded-lg text-slate-300 text-[11px] font-bold">
-        <span>Dept Drills</span>
+      <button onclick="switchTab('calendar')" id="mmtab-calendar" class="mmnav-btn flex flex-col items-center justify-center py-2 rounded-lg text-slate-300 text-[9.5px] font-bold">
+        <span>Calendar</span>
       </button>
-      <button onclick="switchTab('memberSubmit')" id="mmtab-memberSubmit" class="mmnav-btn flex flex-col items-center justify-center py-2 rounded-lg text-slate-300 text-[11px] font-bold">
-        <span>+ Submit CE</span>
+      <button onclick="switchTab('memberDeptLog')" id="mmtab-memberDeptLog" class="mmnav-btn flex flex-col items-center justify-center py-2 rounded-lg text-slate-300 text-[9.5px] font-bold">
+        <span>Drills</span>
+      </button>
+      <button onclick="switchTab('memberSubmit')" id="mmtab-memberSubmit" class="mmnav-btn flex flex-col items-center justify-center py-2 rounded-lg text-slate-300 text-[9.5px] font-bold">
+        <span>+ CE</span>
+      </button>
+      <button onclick="switchTab('messages')" id="mmtab-messages" class="mmnav-btn flex flex-col items-center justify-center py-2 rounded-lg text-slate-300 text-[9.5px] font-bold relative">
+        <span>Message</span>
+        <span id="memberMsgBadgeMobile" class="hidden absolute top-0.5 right-1 bg-sky-400 text-slate-950 text-[8px] font-black px-1 rounded-full">0</span>
       </button>
     </nav>
 
@@ -595,6 +680,24 @@
         <div id="memberSelfServicePanel" class="no-print hidden space-y-3">
           <div id="memberAlertBanner" class="hidden"></div>
 
+          <!-- MEMBER ONBOARDING TO-DO CHECKLIST + WALKTHROUGH LAUNCHER -->
+          <div class="bg-gradient-to-r from-emerald-50 to-sky-50 border-2 border-emerald-300 rounded-xl p-4 shadow-sm space-y-3 text-xs">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="bg-emerald-700 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded">Member Onboarding</span>
+                  <span id="memberChecklistProgress" class="font-mono font-black text-emerald-950 text-xs">0 / 4 Completed</span>
+                </div>
+                <h3 class="font-black text-slate-900 text-sm mt-1">My Account Verification To-Do Checklist</h3>
+                <p class="text-[11px] text-slate-600">Please review and check off each item below so your NREMT &amp; station records stay audit-ready.</p>
+              </div>
+              <button type="button" onclick="startMemberWalkthrough(true)" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs cursor-pointer shadow">
+                Interactive Portal Tour
+              </button>
+            </div>
+            <div id="memberTodoList" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <form onsubmit="saveMemberOwnDates(event)" class="bg-white border border-slate-300 rounded-xl p-4 shadow-sm space-y-3 text-xs">
               <h3 class="font-black text-slate-900 text-sm">Update My BLS Card &amp; Recert Dates</h3>
@@ -660,28 +763,37 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3.5 rounded-xl bg-slate-50 border border-slate-300 text-xs">
             <div class="space-y-2">
-              <div class="font-black text-slate-900 uppercase text-[10px]">Officer PIN Configuration</div>
+              <div class="font-black text-slate-900 uppercase text-[10px]">Officer PIN Configuration &amp; Claim Notification</div>
               <div class="grid grid-cols-2 gap-2">
                 <div>
                   <label class="block font-bold text-slate-700 mb-0.5">Lead Admin PIN</label>
-                  <input type="text" id="officerPinSettingInput" maxlength="6" class="w-full border border-slate-300 rounded px-2.5 py-1 font-mono bg-white">
+                  <input type="text" id="officerPinSettingInput" maxlength="12" class="w-full border border-slate-300 rounded px-2.5 py-1 font-mono bg-white">
                 </div>
                 <div>
                   <label class="block font-bold text-slate-700 mb-0.5">Assistant Officer PIN</label>
-                  <input type="text" id="assistantPinSettingInput" maxlength="6" class="w-full border border-slate-300 rounded px-2.5 py-1 font-mono bg-white">
+                  <input type="text" id="assistantPinSettingInput" maxlength="12" class="w-full border border-slate-300 rounded px-2.5 py-1 font-mono bg-white">
                 </div>
               </div>
-              <button type="button" onclick="updateOfficerPin()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] cursor-pointer">
-                Save Officer PINs
-              </button>
+              <label class="inline-flex items-center gap-2 text-[11px] font-bold text-slate-800 cursor-pointer pt-1">
+                <input type="checkbox" id="notifyOnClaimCheckbox" checked onchange="toggleClaimNotificationSetting(this.checked)" class="rounded text-blue-600">
+                <span>Notify me in Inbox &amp; Alerts when a member claims their account</span>
+              </label>
+              <div class="pt-0.5">
+                <button type="button" onclick="updateOfficerPin()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] cursor-pointer">
+                  Save Officer Settings
+                </button>
+              </div>
             </div>
 
             <div class="space-y-2">
-              <div class="font-black text-slate-900 uppercase text-[10px]">Portal Health &amp; Diagnostics</div>
-              <p id="healthCheckSummary" class="text-[11px] text-slate-600">Run a quick check to verify member fields, domains, and local/cloud integrity.</p>
-              <button type="button" onclick="runSelfCheck()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] cursor-pointer">
-                Run Health Check
-              </button>
+              <div class="font-black text-slate-900 uppercase text-[10px]">Account Onboarding &amp; Diagnostics</div>
+              <p class="text-[11px] text-slate-600">Members with temporary PIN <code class="bg-slate-200 px-1 rounded font-mono">1234</code> are required to create a personal password on first sign-in. Click <strong>Copy Invite</strong> on any row below to send them their login details.</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="runSelfCheck()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] cursor-pointer">
+                  Run Health Check
+                </button>
+                <span id="healthCheckSummary" class="text-[11px] text-slate-600"></span>
+              </div>
             </div>
           </div>
 
@@ -698,7 +810,7 @@
                   <th class="py-1.5 px-1.5 text-center w-16 bg-blue-950">Total Hrs</th>
                   <th class="py-1.5 px-2 text-center w-28">BLS Card Exp</th>
                   <th class="py-1.5 px-2 text-center w-28">Recert Due</th>
-                  <th class="no-print py-1.5 px-1.5 text-center w-20">Member PIN</th>
+                  <th class="no-print py-1.5 px-2 text-center w-44">Account Status &amp; Invite</th>
                 </tr>
               </thead>
               <tbody id="crewSummaryBody" class="divide-y divide-slate-200 text-slate-900 text-[9px]"></tbody>
@@ -706,7 +818,159 @@
           </div>
         </div>
       </section>
+
+      <!-- ==================== VIEW 9: EDITABLE TRAINING CALENDAR ==================== -->
+      <section id="view-calendar" class="hidden space-y-4">
+        <div class="bg-white border border-slate-300 rounded-xl p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 mb-4">
+            <div>
+              <h2 class="text-lg font-black text-slate-900">FRFD Department EMS Training Calendar</h2>
+              <p class="text-xs text-slate-600">Upcoming drills, skills nights &amp; recertification dates. Training Officers can add, edit, or remove scheduled sessions.</p>
+            </div>
+            <button type="button" id="addCalendarEventBtn" onclick="openCalendarModal()" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs shadow cursor-pointer">
+              + Schedule Training Date
+            </button>
+          </div>
+          <div id="calendarEventsList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 10: MESSAGING CENTER & OFFICER ALERTS ==================== -->
+      <section id="view-messages" class="hidden space-y-4">
+        <div id="officerAlertsPanel" class="hidden bg-white border border-slate-300 rounded-xl p-5 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3 mb-3">
+            <div>
+              <h2 class="text-lg font-black text-slate-900">Officer Account Claim &amp; Portal Notifications</h2>
+              <p class="text-xs text-slate-600">Automatic alerts when crew members claim their accounts for the first time or verify their checklists.</p>
+            </div>
+            <button type="button" onclick="markAllOfficerAlertsRead()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-1.5 rounded-lg text-xs cursor-pointer">
+              Mark All Read
+            </button>
+          </div>
+          <div id="officerNotificationsList" class="space-y-2 text-xs"></div>
+        </div>
+
+        <div class="bg-white border border-slate-300 rounded-xl p-5 shadow-sm space-y-4">
+          <div class="border-b border-slate-200 pb-3">
+            <h2 class="text-lg font-black text-slate-900">Crew &amp; Training Officer Messaging Center</h2>
+            <p class="text-xs text-slate-600">Ask questions about CE credits, NREMT affiliation, BLS cards, or Montana endorsements.</p>
+          </div>
+
+          <!-- Member New Message Form -->
+          <form id="memberNewMessageForm" onsubmit="sendMemberMessage(event)" class="hidden bg-slate-50 border border-slate-300 rounded-xl p-4 space-y-3 text-xs">
+            <div class="font-black text-slate-900 text-sm">Send a Question to the Training Officer</div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Subject *</label>
+              <input type="text" id="msgSubjectInput" required placeholder="e.g. Question about my NREMT affiliation or 2025 hours" class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Message *</label>
+              <textarea id="msgBodyInput" rows="3" required placeholder="Type your question here..." class="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white"></textarea>
+            </div>
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-xl shadow cursor-pointer">
+              Send Message to Training Officer
+            </button>
+          </form>
+
+          <div id="messagesThreadContainer" class="space-y-3"></div>
+        </div>
+      </section>
     </main>
+  </div>
+
+  <!-- FIRST-TIME ACCOUNT CLAIM / PASSWORD CHANGE MODAL -->
+  <div id="claimAccountModal" class="no-print hidden fixed inset-0 bg-slate-950/85 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border-2 border-emerald-500 space-y-4 text-xs">
+      <div class="text-center border-b border-slate-200 pb-3">
+        <span class="bg-emerald-100 text-emerald-950 font-black uppercase text-[10px] px-2.5 py-0.5 rounded-full">First-Time Account Setup</span>
+        <h3 class="text-lg font-black text-slate-900 mt-1.5">Claim Your FRFD EMS Account</h3>
+        <p id="claimWelcomeText" class="text-slate-600 mt-1">Welcome! Because you signed in with a temporary generic password, please choose your own personal password/PIN before continuing.</p>
+      </div>
+      <form onsubmit="completeAccountClaim(event)" class="space-y-3">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Create New Personal Password / PIN (min. 4 characters) *</label>
+          <input type="password" id="claimNewPin" required minlength="4" maxlength="20" placeholder="Enter new personal password or PIN" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono text-center">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Confirm New Password / PIN *</label>
+          <input type="password" id="claimConfirmPin" required minlength="4" maxlength="20" placeholder="Re-enter new password or PIN" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-mono text-center">
+        </div>
+        <div id="claimErrorBox" class="hidden text-red-700 bg-red-50 border border-red-200 rounded-lg p-2 text-center font-bold"></div>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl shadow-lg uppercase tracking-wider cursor-pointer">
+          Save Personal Password &amp; Start Walkthrough
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- INTERACTIVE MEMBER WALKTHROUGH TOUR FLOATING CARD (NON-BLOCKING) -->
+  <div id="walkthroughModal" class="no-print hidden fixed bottom-24 sm:bottom-5 right-3 sm:right-5 left-3 sm:left-auto z-50 sm:w-[420px] max-h-[82vh] overflow-y-auto bg-slate-950 text-white rounded-2xl p-4 shadow-2xl border-2 border-sky-400 space-y-3 text-xs">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+        <span id="wtStepBadge" class="bg-sky-400 text-slate-950 font-black uppercase text-[10px] px-2 py-0.5 rounded-full">Step 1 of 4</span>
+        <div id="wtStepDots" class="flex items-center gap-1 ml-1"></div>
+      </div>
+      <button type="button" onclick="closeWalkthrough()" class="text-slate-300 hover:text-white font-bold px-2 py-0.5 rounded bg-slate-800 cursor-pointer">Close ✕</button>
+    </div>
+    <div class="space-y-1.5">
+      <h3 id="wtTitle" class="text-sm font-black text-white">Welcome to Your FRFD EMS Portal</h3>
+      <p id="wtBody" class="text-slate-200 leading-relaxed text-[11.5px]"></p>
+      <div id="wtTipBox" class="bg-slate-900 border border-sky-500/40 rounded-xl p-2 text-[11px] text-sky-200 font-medium"></div>
+    </div>
+    <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-800 bg-slate-950 sticky bottom-0">
+      <button type="button" id="wtPrevBtn" onclick="stepWalkthrough(-1)" class="px-3.5 py-2 rounded-xl border border-slate-600 hover:bg-slate-800 font-bold text-slate-200 cursor-pointer">
+        &larr; Back
+      </button>
+      <button type="button" id="wtNextBtn" onclick="stepWalkthrough(1)" class="flex-1 sm:flex-initial px-5 py-2 rounded-xl bg-sky-400 hover:bg-sky-300 text-slate-950 font-black shadow-lg text-xs cursor-pointer">
+        Next Step &rarr;
+      </button>
+    </div>
+  </div>
+
+  <!-- SCHEDULE / EDIT CALENDAR EVENT MODAL -->
+  <div id="calendarModal" class="no-print hidden fixed inset-0 bg-slate-950/70 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-300 space-y-3 text-xs">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+        <h3 id="calModalHeading" class="font-black text-slate-900 text-sm">Schedule Training Session</h3>
+        <button type="button" onclick="closeCalendarModal()" class="text-slate-500 hover:text-slate-900 font-bold cursor-pointer">✕</button>
+      </div>
+      <form onsubmit="saveCalendarEvent(event)" class="space-y-3">
+        <input type="hidden" id="calEditId">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Date *</label>
+            <input type="date" id="calDate" required class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Time &amp; Est. Hours *</label>
+            <input type="text" id="calTime" required placeholder="e.g. 18:30 (2.5 hrs)" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Training Topic / Title *</label>
+          <input type="text" id="calTitle" required placeholder="e.g. Airway & Supraglottic Skills Night" class="w-full border border-slate-300 rounded-lg px-3 py-1.5">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Location</label>
+            <input type="text" id="calLocation" value="Station 1 Training Room" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Lead Instructor</label>
+            <input type="text" id="calInstructor" placeholder="Instructor name" class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Details / Gear Needed</label>
+          <input type="text" id="calNotes" placeholder="e.g. Bring jump bags & Zoll monitor" class="w-full border border-slate-300 rounded-lg px-3 py-1.5">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeCalendarModal()" class="px-3.5 py-1.5 rounded-lg border border-slate-300 font-bold text-slate-700 cursor-pointer">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black cursor-pointer">Save to Calendar</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Add Crew Member Modal -->
@@ -770,22 +1034,62 @@
 
     let officerPin = '1911';
     let assistantOfficerPin = '2026';
+    let notifyOnAccountClaim = true;
     let currentUser = null;
+    let officerReturnSnapshot = null;
+    let sandboxMode = false;
+    let liveBackupSnapshot = null;
     let activeLedgerYear = '2026';
     let pendingProofDataUrl = '';
     let expandedExpiryAlert = false;
+    let walkthroughStepIndex = 0;
     const failedAttempts = {};
     const LOCKOUT_THRESHOLD = 5;
     const LOCKOUT_MS = 60000;
 
-    const OFFICER_ACCOUNTS = [
-      { usernames: ['jburhenn', 'j.burhenn', 'burhenn', 'frfd-lt', 'officer-jb'], displayName: 'Jessica Burhenn, AEMT (EMS Lt.)', tier: 'lead' },
-      { usernames: ['mroth', 'm.roth', 'roth', 'frfd-pm', 'officer-mr'], displayName: 'Matthew Roth, Paramedic', tier: 'lead' },
-      { usernames: ['wboswell', 'w.boswell', 'boswell', 'frfd-emt', 'officer-wb'], displayName: 'William Boswell, EMT', tier: 'assistant' },
-      { usernames: ['frfd-officer', 'officer', 'training-officer', 'admin'], displayName: 'Authorized Training Officer', tier: 'lead' }
+    const DEFAULT_CALENDAR_EVENTS = [
+      { id: 'cal-1', date: '2026-12-03', time: '18:30 (2.0 hrs)', title: 'Winter Hypothermia, Cold Water Submersion & Rewarming', location: 'Station 1', instructor: 'EMS Training Staff', notes: 'Review Montana hypothermia & resuscitation protocols' },
+      { id: 'cal-2', date: '2026-12-17', time: '18:30 (2.5 hrs)', title: 'Pediatric Airway & Respiratory Emergencies (P)', location: 'Station 1', instructor: 'EMS Training Staff', notes: 'Counts toward NREMT Pediatric requirement' },
+      { id: 'cal-3', date: '2027-01-21', time: '18:30 (2.5 hrs)', title: 'NREMT March 2027 Recertification Audit & Skills Sign-Off', location: 'Station 1', instructor: 'Training Officers', notes: 'Mandatory check-in for all providers expiring 03/31/2027' }
+    ];
+
+    const WALKTHROUGH_STEPS = [
+      {
+        title: '1. Verify Your Transcript & Account Checklist',
+        body: 'Your home screen displays your Onboarding Checklist (top) and official FRFD Continuing Education Transcript (below).',
+        tip: 'Check off each to-do item (BLS card date, NREMT/State recert date, Montana endorsements, and transcript review) so your profile stays audit-ready.',
+        tab: 'transcripts',
+        highlightIds: ['mtab-desk-transcripts', 'mmtab-transcripts', 'memberTodoList']
+      },
+      {
+        title: '2. Check Department Drills You Attended',
+        body: 'Open "Dept Drills Attended" anytime to verify every station training night where your sign-in roster was recorded.',
+        tip: 'Only trainings on or after your initial EMT/AEMT/Paramedic licensure date count toward NREMT renewal.',
+        tab: 'memberDeptLog',
+        highlightIds: ['mtab-desk-memberDeptLog', 'mmtab-memberDeptLog', 'view-memberDeptLog']
+      },
+      {
+        title: '3. Submit Outside Courses & Certificates',
+        body: 'Took an outside class, conference, or online CAPCE course? Use "+ Submit CE" to upload a photo of your certificate or roster.',
+        tip: 'Your Training Officer will review the proof, verify the NREMT category, and post it straight to your transcript.',
+        tab: 'memberSubmit',
+        highlightIds: ['mtab-desk-memberSubmit', 'mmtab-memberSubmit', 'view-memberSubmit']
+      },
+      {
+        title: '4. View the Training Calendar & Message Officers',
+        body: 'Check upcoming drill dates on the "Training Calendar" tab, or use "Message Officer" if you ever have a question about your hours or NREMT affiliation.',
+        tip: 'You can relaunch this tour anytime by clicking "Interactive Portal Tour" above your checklist!',
+        tab: 'messages',
+        highlightIds: ['mtab-desk-messages', 'mmtab-messages', 'memberNewMessageForm']
+      }
     ];
 
     const ENDORSEMENT_STAGES = ['Not Started', 'In-House Practice', 'Field Starts', 'Signed Off', 'N/A'];
+
+    const OFFICER_ACCOUNTS = [
+      { id: 'officer_lead', usernames: ['jburhenn', 'frfd-officer', 'officer'], displayName: 'Jessica Burhenn, AEMT (EMS Lt.)' },
+      { id: 'officer_asst', usernames: ['frfd-instructor', 'instructor', 'assistant'], displayName: 'FRFD EMS Instructor / Officer' }
+    ];
 
     // Default FRFD EMS Crew Roster (17 members)
     const DEFAULT_MEMBERS = [
@@ -857,8 +1161,10 @@
     let members = JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
     let sessions = JSON.parse(JSON.stringify(DEFAULT_SESSIONS));
     let submissions = [];
+    let calendarEvents = JSON.parse(JSON.stringify(DEFAULT_CALENDAR_EVENTS));
+    let messages = [];
+    let officerNotifications = [];
 
-    // ==================== HELPERS & DATE EXPIRATION LOGIC ====================
     function showToast(msg) {
       const toast = document.getElementById('toast');
       if (!toast) return;
@@ -943,19 +1249,33 @@
       members = parsed.members;
       sessions = parsed.sessions;
       submissions = Array.isArray(parsed.submissions) ? parsed.submissions : [];
+      calendarEvents = Array.isArray(parsed.calendarEvents) && parsed.calendarEvents.length > 0
+        ? parsed.calendarEvents
+        : JSON.parse(JSON.stringify(DEFAULT_CALENDAR_EVENTS));
+      messages = Array.isArray(parsed.messages) ? parsed.messages : [];
+      officerNotifications = Array.isArray(parsed.officerNotifications) ? parsed.officerNotifications : [];
+      if (typeof parsed.notifyOnAccountClaim === 'boolean') notifyOnAccountClaim = parsed.notifyOnAccountClaim;
       if (parsed.officerPin) officerPin = parsed.officerPin;
       if (parsed.assistantOfficerPin) assistantOfficerPin = parsed.assistantOfficerPin;
       return true;
     }
 
     function saveToCloud() {
+      if (sandboxMode) {
+        setLedgerSaveState(false, 'Sandbox Demo Mode: Changes stay temporary in this demo session.');
+        return;
+      }
       const payload = {
         updatedAt: new Date().toISOString(),
         officerPin,
         assistantOfficerPin,
+        notifyOnAccountClaim,
         members,
         sessions,
-        submissions
+        submissions,
+        calendarEvents,
+        messages,
+        officerNotifications
       };
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -1161,11 +1481,235 @@
       if (pin === (m.pin || '1234') || pin === officerPin) {
         clearFailedAttempts('member');
         errEl?.classList.add('hidden');
-        currentUser = { role: 'member', isLeadAdmin: false, name: m.displayName, memberObj: m };
+        officerReturnSnapshot = null;
+        currentUser = { role: 'member', isLeadAdmin: false, isPreview: false, name: m.displayName, memberObj: m };
         enterApp();
+
+        if (!m.accountClaimed && (m.pin || '1234') === '1234') {
+          openClaimAccountModal(m);
+        } else if (!m.walkthroughSeen) {
+          startMemberWalkthrough(false);
+        }
       } else {
         recordFailedAttempt('member', errEl, 'Incorrect username or password/PIN.');
       }
+    };
+
+    function openClaimAccountModal(m) {
+      const modal = document.getElementById('claimAccountModal');
+      const welcome = document.getElementById('claimWelcomeText');
+      const err = document.getElementById('claimErrorBox');
+      if (err) err.classList.add('hidden');
+      if (welcome) {
+        welcome.innerText = `Welcome, ${m.displayName}! Your account was initialized with a temporary password. Please set your own personal password/PIN now.`;
+      }
+      document.getElementById('claimNewPin').value = '';
+      document.getElementById('claimConfirmPin').value = '';
+      modal?.classList.remove('hidden');
+    }
+
+    window.completeAccountClaim = function(e) {
+      e.preventDefault();
+      if (!currentUser?.memberObj) return;
+      const p1 = (document.getElementById('claimNewPin')?.value || '').trim();
+      const p2 = (document.getElementById('claimConfirmPin')?.value || '').trim();
+      const err = document.getElementById('claimErrorBox');
+
+      if (p1.length < 4) {
+        err.innerText = 'New password/PIN must be at least 4 characters.';
+        err.classList.remove('hidden');
+        return;
+      }
+      if (p1 === '1234') {
+        err.innerText = 'Please choose a personal password/PIN other than the temporary 1234 code.';
+        err.classList.remove('hidden');
+        return;
+      }
+      if (p1 !== p2) {
+        err.innerText = 'Passwords do not match. Please re-enter.';
+        err.classList.remove('hidden');
+        return;
+      }
+
+      const m = currentUser.memberObj;
+      m.pin = p1;
+      m.accountClaimed = true;
+      m.claimedAt = new Date().toISOString();
+
+      if (notifyOnAccountClaim) {
+        officerNotifications.unshift({
+          id: `notif-${Date.now()}`,
+          type: 'account_claimed',
+          memberId: m.id,
+          memberName: m.displayName,
+          text: `${m.displayName} claimed their portal account for the first time and set a personal password.`,
+          createdAt: new Date().toISOString(),
+          read: false
+        });
+      }
+
+      saveToCloud();
+      updatePendingBadges();
+      document.getElementById('claimAccountModal')?.classList.add('hidden');
+      showToast('Personal password saved! Welcome to the FRFD EMS Portal.');
+      startMemberWalkthrough(false);
+    };
+
+    window.startMemberWalkthrough = function(force = false) {
+      walkthroughStepIndex = 0;
+      document.getElementById('walkthroughModal')?.classList.remove('hidden');
+      renderWalkthroughStep();
+    };
+
+    function clearWalkthroughHighlights() {
+      document.querySelectorAll('.tour-highlight-ring').forEach(el => {
+        el.classList.remove('tour-highlight-ring');
+      });
+    }
+
+    function renderWalkthroughStep() {
+      const step = WALKTHROUGH_STEPS[walkthroughStepIndex] || WALKTHROUGH_STEPS[0];
+      document.getElementById('wtStepBadge').innerText = `Step ${walkthroughStepIndex + 1} of ${WALKTHROUGH_STEPS.length}`;
+      const dotsEl = document.getElementById('wtStepDots');
+      if (dotsEl) {
+        dotsEl.innerHTML = WALKTHROUGH_STEPS.map((_, i) => `
+          <button type="button" onclick="goToWalkthroughStep(${i})" title="Go to step ${i + 1}" class="w-2.5 h-2.5 rounded-full cursor-pointer transition ${i === walkthroughStepIndex ? 'bg-sky-400 scale-110' : 'bg-slate-600 hover:bg-slate-400'}"></button>
+        `).join('');
+      }
+      document.getElementById('wtTitle').innerText = step.title;
+      document.getElementById('wtBody').innerText = step.body;
+      document.getElementById('wtTipBox').innerText = step.tip;
+      document.getElementById('wtPrevBtn').disabled = walkthroughStepIndex === 0;
+      document.getElementById('wtPrevBtn').classList.toggle('opacity-40', walkthroughStepIndex === 0);
+      document.getElementById('wtNextBtn').innerText = walkthroughStepIndex === WALKTHROUGH_STEPS.length - 1 ? 'Finish Tour ✓' : 'Next Step →';
+      if (step.tab) switchTab(step.tab);
+
+      clearWalkthroughHighlights();
+      (step.highlightIds || []).forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.classList.contains('hidden')) {
+          el.classList.add('tour-highlight-ring');
+        }
+      });
+      const targetPanel = (step.highlightIds || []).map(id => document.getElementById(id)).find(el => el && !el.classList.contains('hidden'));
+      if (targetPanel && typeof targetPanel.scrollIntoView === 'function') {
+        targetPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    window.goToWalkthroughStep = function(idx) {
+      if (idx < 0 || idx >= WALKTHROUGH_STEPS.length) return;
+      walkthroughStepIndex = idx;
+      renderWalkthroughStep();
+    };
+
+    window.stepWalkthrough = function(delta) {
+      const next = walkthroughStepIndex + delta;
+      if (next < 0) return;
+      if (next >= WALKTHROUGH_STEPS.length) {
+        closeWalkthrough();
+        return;
+      }
+      walkthroughStepIndex = next;
+      renderWalkthroughStep();
+    };
+
+    window.closeWalkthrough = function() {
+      clearWalkthroughHighlights();
+      document.getElementById('walkthroughModal')?.classList.add('hidden');
+      if (currentUser?.memberObj && !currentUser.isPreview) {
+        currentUser.memberObj.walkthroughSeen = true;
+        saveToCloud();
+      }
+      switchTab('transcripts');
+    };
+
+    // ==================== OFFICER PREVIEW MEMBER VIEW & SANDBOX MODE ====================
+    window.openMemberPreviewPicker = function() {
+      if (!currentUser || currentUser.role !== 'officer') return;
+      officerReturnSnapshot = { ...currentUser };
+      const target = members[0];
+      if (!target) return;
+      const sel = document.getElementById('previewMemberSwitcher');
+      if (sel) {
+        sel.innerHTML = members.map(m => `<option value="${m.id}">${m.displayName} (${m.level})</option>`).join('');
+        sel.value = target.id;
+      }
+      currentUser = { role: 'member', isLeadAdmin: false, isPreview: true, name: target.displayName, memberObj: target };
+      enterApp();
+      showToast(`Previewing member portal as ${target.displayName}`);
+    };
+
+    window.switchPreviewMember = function(memberId) {
+      const target = members.find(m => m.id === memberId);
+      if (!target) return;
+      currentUser = { role: 'member', isLeadAdmin: false, isPreview: true, name: target.displayName, memberObj: target };
+      enterApp();
+    };
+
+    window.exitMemberPreview = function() {
+      if (!officerReturnSnapshot) return;
+      currentUser = officerReturnSnapshot;
+      officerReturnSnapshot = null;
+      enterApp();
+      showToast('Returned to Training Officer Portal');
+    };
+
+    window.toggleSandboxMode = function() {
+      if (!sandboxMode) {
+        liveBackupSnapshot = JSON.stringify({ members, sessions, submissions, calendarEvents, messages, officerNotifications });
+        sandboxMode = true;
+        if (!members.some(m => m.id === 'demo_provider')) {
+          members.unshift({
+            id: 'demo_provider',
+            name: 'Demo, Alex',
+            displayName: 'Demo, Alex (Sandbox)',
+            level: 'EMT',
+            regNum: 'E9999999',
+            emsId: '0000-DEMO-2026',
+            cutoff: '2025-01-01',
+            cycle: '01/01/2025 – 03/31/2027',
+            recertDue: '2027-03-31',
+            blsExp: '2026-12-15',
+            portalStatus: 'Affiliated',
+            pin: '1234',
+            accountClaimed: false,
+            endorsements: { airway: 'Signed Off', meds: 'Field Starts', iv: 'In-House Practice', monitor: 'N/A', ivPractice: 4, ivField: 2, notes: 'Demo provider profile for department walkthroughs' }
+          });
+        }
+        document.getElementById('sandboxBanner')?.classList.remove('hidden');
+        const btn = document.getElementById('sandboxToggleBtn');
+        if (btn) {
+          btn.innerText = 'Sandbox Demo: ON';
+          btn.classList.add('bg-amber-400', 'text-slate-950');
+        }
+        populateMemberDropdowns();
+        refreshAllViews();
+        showToast('Sandbox Demo Mode ON — live data is protected!');
+      } else {
+        if (liveBackupSnapshot) {
+          applyLoadedPayload(liveBackupSnapshot);
+          liveBackupSnapshot = null;
+        }
+        sandboxMode = false;
+        document.getElementById('sandboxBanner')?.classList.add('hidden');
+        const btn = document.getElementById('sandboxToggleBtn');
+        if (btn) {
+          btn.innerText = 'Sandbox Demo: OFF';
+          btn.classList.remove('bg-amber-400', 'text-slate-950');
+        }
+        populateMemberDropdowns();
+        refreshAllViews();
+        showToast('Exited Sandbox Mode — live data restored.');
+      }
+    };
+
+    window.resetSandboxData = function() {
+      if (!sandboxMode || !liveBackupSnapshot) return;
+      applyLoadedPayload(liveBackupSnapshot);
+      sandboxMode = false;
+      toggleSandboxMode();
+      showToast('Sandbox demo data reset!');
     };
 
     function enterApp() {
@@ -1178,6 +1722,11 @@
       const memDesk = document.getElementById('memberDesktopNav');
       const offMob = document.getElementById('officerMobileNav');
       const memMob = document.getElementById('memberMobileNav');
+
+      const isOfficerOrPreview = currentUser.role === 'officer' || currentUser.isPreview;
+      document.getElementById('sandboxToggleBtn')?.classList.toggle('hidden', !isOfficerOrPreview);
+      document.getElementById('previewMemberBtn')?.classList.toggle('hidden', !(currentUser.role === 'officer' && currentUser.isLeadAdmin));
+      document.getElementById('memberPreviewBanner')?.classList.toggle('hidden', !currentUser.isPreview);
 
       if (currentUser.role === 'officer') {
         const tierText = currentUser.isLeadAdmin ? 'Lead Training Officer (Full Admin)' : 'Assistant Officer / Instructor (Roster Upload)';
@@ -1196,15 +1745,19 @@
         document.getElementById('restoreBtn')?.classList.toggle('hidden', !currentUser.isLeadAdmin);
         document.getElementById('privateLedgerToggleWrap')?.classList.toggle('hidden', !currentUser.isLeadAdmin);
         document.getElementById('ledgerEditHeader')?.classList.toggle('hidden', !currentUser.isLeadAdmin);
+        document.getElementById('memberSelfServicePanel')?.classList.add('hidden');
+        document.getElementById('transcriptMemberPickerWrap')?.classList.remove('hidden');
 
         const leadPinInput = document.getElementById('officerPinSettingInput');
         const asstPinInput = document.getElementById('assistantPinSettingInput');
+        const notifyChk = document.getElementById('notifyOnClaimCheckbox');
         if (leadPinInput) leadPinInput.value = officerPin;
         if (asstPinInput) asstPinInput.value = assistantOfficerPin;
+        if (notifyChk) notifyChk.checked = notifyOnAccountClaim;
 
         switchTab('ledger');
       } else {
-        if (userLabel) userLabel.innerText = `${currentUser.name} • Crew Member Portal`;
+        if (userLabel) userLabel.innerText = `${currentUser.name} • ${currentUser.isPreview ? 'Member Preview Mode' : 'Crew Member Portal'}`;
         offDesk?.classList.add('hidden');
         offDesk?.classList.remove('sm:flex');
         memDesk?.classList.remove('hidden');
@@ -1224,7 +1777,12 @@
     }
 
     window.logout = function() {
+      if (sandboxMode) {
+        toggleSandboxMode();
+      }
+      closeWalkthrough();
       currentUser = null;
+      officerReturnSnapshot = null;
       document.getElementById('appShell')?.classList.add('hidden');
       document.getElementById('loginScreen')?.classList.remove('hidden');
       const p1 = document.getElementById('loginOfficerPin');
@@ -1234,7 +1792,7 @@
     };
 
     window.switchTab = function(tabName) {
-      const views = ['ledger', 'add', 'approvals', 'endorsements', 'memberSubmit', 'memberDeptLog', 'transcripts', 'roster'];
+      const views = ['ledger', 'add', 'calendar', 'approvals', 'messages', 'endorsements', 'memberSubmit', 'memberDeptLog', 'transcripts', 'roster'];
       views.forEach(v => {
         document.getElementById(`view-${v}`)?.classList.toggle('hidden', v !== tabName);
       });
@@ -1272,7 +1830,9 @@
         renderAttendeeCheckboxes();
         updateDomainSum();
       }
+      if (tabName === 'calendar') renderCalendar();
       if (tabName === 'approvals') renderApprovalsQueue();
+      if (tabName === 'messages') renderMessagingCenter();
       if (tabName === 'endorsements') renderEndorsements();
       if (tabName === 'memberSubmit') {
         if (!document.getElementById('msDate')?.value) document.getElementById('msDate').value = new Date().toISOString().split('T')[0];
@@ -1286,6 +1846,8 @@
     function refreshAllViews() {
       updatePendingBadges();
       updateOfficerExpirationAlerts();
+      renderCalendar();
+      renderMessagingCenter();
       if (currentUser?.role === 'officer') {
         renderLedger();
         if (currentUser.isLeadAdmin) {
@@ -1310,6 +1872,26 @@
         el.innerText = String(count);
         el.classList.toggle('hidden', count === 0);
       });
+
+      const unreadNotifs = officerNotifications.filter(n => !n.read).length;
+      const openMsgs = messages.filter(m => !m.reply).length;
+      const officerTotal = unreadNotifs + openMsgs;
+      ['inboxBadgeDesktop', 'inboxBadgeMobile'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerText = String(officerTotal);
+        el.classList.toggle('hidden', officerTotal === 0);
+      });
+
+      if (currentUser?.memberObj) {
+        const unreadReplies = messages.filter(m => m.memberId === currentUser.memberObj.id && m.reply && !m.memberRead).length;
+        ['memberMsgBadgeDesktop', 'memberMsgBadgeMobile'].forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.innerText = String(unreadReplies);
+          el.classList.toggle('hidden', unreadReplies === 0);
+        });
+      }
     }
 
     function updateOfficerExpirationAlerts() {
@@ -2080,6 +2662,37 @@
     function renderMemberSelfService() {
       if (!currentUser?.memberObj) return;
       const m = currentUser.memberObj;
+      if (!m.checklist) {
+        m.checklist = { blsVerified: false, recertVerified: false, endorsementsChecked: false, transcriptReviewed: false };
+      }
+
+      const todoItems = [
+        { key: 'blsVerified', title: '1. Verify BLS CPR Expiration Date', desc: `Current BLS Exp: ${formatDisplayDate(m.blsExp)}` },
+        { key: 'recertVerified', title: '2. Confirm NREMT / State Recert Date & ID', desc: `Reg: ${m.regNum} • Due: ${formatDisplayDate(m.recertDue)}` },
+        { key: 'endorsementsChecked', title: '3. Review Montana Scope Endorsements', desc: 'Confirm Airway, Meds, IV/IO & 12-Lead status' },
+        { key: 'transcriptReviewed', title: '4. Audit Post-Licensure CE Transcript', desc: 'Verify all attended drills & hours below' }
+      ];
+
+      const doneCount = todoItems.filter(t => !!m.checklist[t.key]).length;
+      const progEl = document.getElementById('memberChecklistProgress');
+      if (progEl) progEl.innerText = `${doneCount} / ${todoItems.length} Completed`;
+
+      const todoBox = document.getElementById('memberTodoList');
+      if (todoBox) {
+        todoBox.innerHTML = todoItems.map(item => {
+          const checked = !!m.checklist[item.key];
+          return `
+            <label class="flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition ${checked ? 'bg-emerald-100/70 border-emerald-400 text-emerald-950' : 'bg-white border-slate-300 text-slate-900 hover:bg-slate-50'}">
+              <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleMemberChecklistItem('${item.key}', this.checked)" class="mt-0.5 rounded text-emerald-600">
+              <div>
+                <div class="font-bold text-xs ${checked ? 'line-through text-emerald-900' : 'text-slate-950'}">${item.title}</div>
+                <div class="text-[10.5px] text-slate-600">${item.desc}</div>
+              </div>
+            </label>
+          `;
+        }).join('');
+      }
+
       const blsInp = document.getElementById('myBlsExpInput');
       const recInp = document.getElementById('myRecertExpInput');
       if (blsInp) blsInp.value = m.blsExp || '';
@@ -2130,46 +2743,307 @@
       showToast('Updated your BLS & Recert dates!');
     };
 
-    // ==================== TRANSCRIPT RENDERING ====================
-    const DEFAULT_TRANSCRIPT_COL_WIDTHS = [9, 24, 20, 15, 14, 9, 9];
+    window.toggleMemberChecklistItem = function(key, checked) {
+      if (!currentUser?.memberObj) return;
+      const m = currentUser.memberObj;
+      if (!m.checklist) m.checklist = {};
+      m.checklist[key] = !!checked;
+      saveToCloud();
+      renderMemberSelfService();
+      const allDone = ['blsVerified', 'recertVerified', 'endorsementsChecked', 'transcriptReviewed'].every(k => m.checklist[k]);
+      if (allDone && !m.checklistNotified) {
+        m.checklistNotified = true;
+        officerNotifications.unshift({
+          id: `notif-chk-${Date.now()}`,
+          type: 'checklist_complete',
+          memberId: m.id,
+          memberName: m.displayName,
+          text: `${m.displayName} completed all 4 items on their Member Onboarding & Record Verification Checklist.`,
+          createdAt: new Date().toISOString(),
+          read: false
+        });
+        saveToCloud();
+        updatePendingBadges();
+      }
+      showToast(checked ? 'Checklist item verified!' : 'Checklist item unchecked.');
+    };
+
+    // ==================== TRAINING CALENDAR (EDITABLE BY OFFICERS) ====================
+    function renderCalendar() {
+      const container = document.getElementById('calendarEventsList');
+      const addBtn = document.getElementById('addCalendarEventBtn');
+      if (!container) return;
+
+      const canEdit = currentUser?.role === 'officer' && !currentUser?.isPreview;
+      if (addBtn) addBtn.classList.toggle('hidden', !canEdit);
+
+      const sorted = [...calendarEvents].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+      if (sorted.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-xs text-slate-500 italic py-6 text-center">No upcoming trainings scheduled yet.</div>';
+        return;
+      }
+
+      container.innerHTML = sorted.map(ev => `
+        <div class="border border-slate-300 rounded-xl p-4 bg-slate-50 flex flex-col justify-between gap-2 text-xs">
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-1.5 mb-1">
+              <span class="bg-blue-900 text-white font-mono font-black text-[10.5px] px-2.5 py-0.5 rounded">${formatDisplayDate(ev.date)}</span>
+              <span class="font-mono font-bold text-slate-700 text-[11px]">${ev.time || ''}</span>
+            </div>
+            <h3 class="font-black text-slate-950 text-sm">${ev.title}</h3>
+            <div class="text-[11px] text-slate-600 mt-1">Location: <strong>${ev.location || 'Station 1'}</strong> • Instructor: <strong>${ev.instructor || 'TBD'}</strong></div>
+            ${ev.notes ? `<div class="mt-1.5 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-700">${ev.notes}</div>` : ''}
+          </div>
+          ${canEdit ? `
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-200">
+              <button type="button" onclick="openCalendarModal('${ev.id}')" class="bg-white hover:bg-blue-50 border border-slate-300 text-blue-900 font-bold px-2.5 py-1 rounded-lg text-[11px] cursor-pointer">Edit</button>
+              <button type="button" onclick="deleteCalendarEvent('${ev.id}')" class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-900 font-bold px-2.5 py-1 rounded-lg text-[11px] cursor-pointer">Remove</button>
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    window.openCalendarModal = function(eventId = '') {
+      const modal = document.getElementById('calendarModal');
+      const heading = document.getElementById('calModalHeading');
+      if (eventId) {
+        const ev = calendarEvents.find(x => x.id === eventId);
+        if (!ev) return;
+        heading.innerText = 'Edit Scheduled Training';
+        document.getElementById('calEditId').value = ev.id;
+        document.getElementById('calDate').value = ev.date || '';
+        document.getElementById('calTime').value = ev.time || '';
+        document.getElementById('calTitle').value = ev.title || '';
+        document.getElementById('calLocation').value = ev.location || 'Station 1 Training Room';
+        document.getElementById('calInstructor').value = ev.instructor || '';
+        document.getElementById('calNotes').value = ev.notes || '';
+      } else {
+        heading.innerText = 'Schedule New Training Date';
+        document.getElementById('calEditId').value = '';
+        document.getElementById('calDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('calTime').value = '18:30 (2.0 hrs)';
+        document.getElementById('calTitle').value = '';
+        document.getElementById('calLocation').value = 'Station 1 Training Room';
+        document.getElementById('calInstructor').value = '';
+        document.getElementById('calNotes').value = '';
+      }
+      modal?.classList.remove('hidden');
+    };
+
+    window.closeCalendarModal = function() {
+      document.getElementById('calendarModal')?.classList.add('hidden');
+    };
+
+    window.saveCalendarEvent = function(e) {
+      e.preventDefault();
+      const editId = document.getElementById('calEditId')?.value;
+      const date = document.getElementById('calDate')?.value;
+      const time = (document.getElementById('calTime')?.value || '').trim();
+      const title = (document.getElementById('calTitle')?.value || '').trim();
+      const location = (document.getElementById('calLocation')?.value || '').trim();
+      const instructor = (document.getElementById('calInstructor')?.value || '').trim();
+      const notes = (document.getElementById('calNotes')?.value || '').trim();
+
+      if (editId) {
+        const ev = calendarEvents.find(x => x.id === editId);
+        if (ev) Object.assign(ev, { date, time, title, location, instructor, notes });
+      } else {
+        calendarEvents.push({ id: `cal-${Date.now()}`, date, time, title, location, instructor, notes });
+      }
+
+      saveToCloud();
+      renderCalendar();
+      closeCalendarModal();
+      showToast('Training calendar updated!');
+    };
+
+    window.deleteCalendarEvent = function(eventId) {
+      calendarEvents = calendarEvents.filter(x => x.id !== eventId);
+      saveToCloud();
+      renderCalendar();
+      showToast('Removed training from calendar.');
+    };
+
+    // ==================== MESSAGING CENTER & OFFICER NOTIFICATIONS ====================
+    function renderMessagingCenter() {
+      const alertsPanel = document.getElementById('officerAlertsPanel');
+      const notifsList = document.getElementById('officerNotificationsList');
+      const memberForm = document.getElementById('memberNewMessageForm');
+      const threadsBox = document.getElementById('messagesThreadContainer');
+      if (!threadsBox) return;
+
+      const isOfficer = currentUser?.role === 'officer' && !currentUser?.isPreview;
+      if (alertsPanel) alertsPanel.classList.toggle('hidden', !isOfficer);
+      if (memberForm) memberForm.classList.toggle('hidden', isOfficer);
+
+      if (isOfficer && notifsList) {
+        if (officerNotifications.length === 0) {
+          notifsList.innerHTML = '<div class="text-slate-500 italic py-2">No account claim or checklist alerts yet.</div>';
+        } else {
+          notifsList.innerHTML = officerNotifications.map(n => `
+            <div class="flex items-center justify-between gap-2 p-2.5 rounded-lg border ${n.read ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-sky-50 border-sky-400 text-sky-950 font-bold'}">
+              <div>
+                <span>${n.text}</span>
+                <span class="block text-[10px] font-mono text-slate-500 mt-0.5">${new Date(n.createdAt).toLocaleString()}</span>
+              </div>
+              ${!n.read ? `<button type="button" onclick="markOfficerAlertRead('${n.id}')" class="bg-sky-700 text-white px-2 py-1 rounded text-[10px] font-bold cursor-pointer shrink-0">Dismiss</button>` : ''}
+            </div>
+          `).join('');
+        }
+      }
+
+      const visibleThreads = isOfficer
+        ? messages
+        : messages.filter(m => m.memberId === currentUser?.memberObj?.id);
+
+      if (!isOfficer && currentUser?.memberObj) {
+        let changed = false;
+        visibleThreads.forEach(t => {
+          if (t.reply && !t.memberRead) {
+            t.memberRead = true;
+            changed = true;
+          }
+        });
+        if (changed) {
+          saveToCloud();
+          updatePendingBadges();
+        }
+      }
+
+      if (visibleThreads.length === 0) {
+        threadsBox.innerHTML = '<div class="text-xs text-slate-500 italic py-4 text-center">No messages yet.</div>';
+        return;
+      }
+
+      threadsBox.innerHTML = visibleThreads.map(msg => `
+        <div class="border border-slate-300 rounded-xl p-4 bg-slate-50 space-y-2 text-xs">
+          <div class="flex flex-wrap justify-between items-center gap-2">
+            <div>
+              <span class="font-black text-slate-950 text-sm">${msg.subject}</span>
+              <span class="block text-[11px] text-slate-600">From: <strong>${msg.memberName}</strong> • ${new Date(msg.createdAt).toLocaleString()}</span>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase ${msg.reply ? 'bg-emerald-100 text-emerald-950 border border-emerald-300' : 'bg-amber-100 text-amber-950 border border-amber-300'}">
+              ${msg.reply ? 'Answered' : 'Awaiting Officer Reply'}
+            </span>
+          </div>
+          <p class="bg-white border border-slate-200 rounded-lg p-3 text-slate-800 whitespace-pre-wrap">${msg.body}</p>
+          ${msg.reply ? `
+            <div class="bg-blue-50 border border-blue-300 rounded-lg p-3 text-blue-950">
+              <div class="font-black text-[10.5px] uppercase mb-0.5">Training Officer Reply (${msg.repliedBy || 'Training Officer'}):</div>
+              <div class="whitespace-pre-wrap">${msg.reply}</div>
+            </div>
+          ` : ''}
+          ${isOfficer ? `
+            <div class="flex gap-2 pt-1">
+              <input type="text" id="replyInput-${msg.id}" value="${(msg.reply || '').replace(/"/g, '&quot;')}" placeholder="Write a reply to ${msg.memberName}..." class="flex-1 border border-slate-300 rounded-lg px-3 py-1.5 bg-white">
+              <button type="button" onclick="replyToMemberMessage('${msg.id}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 rounded-lg cursor-pointer">Send Reply</button>
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    window.sendMemberMessage = function(e) {
+      e.preventDefault();
+      if (!currentUser?.memberObj) return;
+      const subject = (document.getElementById('msgSubjectInput')?.value || '').trim();
+      const body = (document.getElementById('msgBodyInput')?.value || '').trim();
+      if (!subject || !body) return;
+
+      messages.unshift({
+        id: `msg-${Date.now()}`,
+        memberId: currentUser.memberObj.id,
+        memberName: currentUser.memberObj.displayName,
+        subject,
+        body,
+        createdAt: new Date().toISOString(),
+        reply: '',
+        repliedBy: '',
+        memberRead: true
+      });
+
+      saveToCloud();
+      updatePendingBadges();
+      e.target.reset();
+      renderMessagingCenter();
+      showToast('Message sent to Training Officer!');
+    };
+
+    window.replyToMemberMessage = function(msgId) {
+      const msg = messages.find(x => x.id === msgId);
+      const inp = document.getElementById(`replyInput-${msgId}`);
+      if (!msg || !inp) return;
+      const text = inp.value.trim();
+      if (!text) return;
+      msg.reply = text;
+      msg.repliedBy = currentUser?.name || 'Training Officer';
+      msg.memberRead = false;
+      saveToCloud();
+      updatePendingBadges();
+      renderMessagingCenter();
+      showToast(`Reply sent to ${msg.memberName}!`);
+    };
+
+    window.markOfficerAlertRead = function(notifId) {
+      const n = officerNotifications.find(x => x.id === notifId);
+      if (n) n.read = true;
+      saveToCloud();
+      updatePendingBadges();
+      renderMessagingCenter();
+    };
+
+    window.markAllOfficerAlertsRead = function() {
+      officerNotifications.forEach(n => { n.read = true; });
+      saveToCloud();
+      updatePendingBadges();
+      renderMessagingCenter();
+      showToast('All notifications marked as read.');
+    };
+
+    window.toggleClaimNotificationSetting = function(enabled) {
+      notifyOnAccountClaim = !!enabled;
+      saveToCloud();
+      showToast(enabled ? 'Account claim notifications enabled.' : 'Account claim notifications muted.');
+    };
+
+    window.copyMemberInvite = function(memberId) {
+      const m = members.find(x => x.id === memberId);
+      if (!m) return;
+      const portalUrl = window.location.href.split('#')[0];
+      const inviteText = `FRFD EMS Training Portal Login\nLink: ${portalUrl}\nTab: Crew Member Portal\nUsername / ID: ${m.id} (or ${m.regNum})\nTemporary Password: ${m.pin || '1234'}\n(You will be prompted to create your own personal password on first sign-in.)`;
+      copyCourseText(inviteText);
+      showToast(`Copied first-time login invite for ${m.displayName}!`);
+    };
+
+    const DEFAULT_TRANSCRIPT_COL_WIDTHS = [10, 25, 20, 14, 15, 8, 8];
     let transcriptColWidths = [...DEFAULT_TRANSCRIPT_COL_WIDTHS];
 
     function attachTranscriptColumnResizers() {
       const table = document.getElementById('transcriptTable');
       if (!table) return;
-      const ths = [...table.querySelectorAll('thead th')];
-      if (ths.length !== transcriptColWidths.length) return;
-
+      const ths = table.querySelectorAll('thead th');
       ths.forEach((th, idx) => {
-        th.style.position = 'relative';
-        th.style.width = `${transcriptColWidths[idx]}%`;
         if (idx === ths.length - 1) return;
-
-        const handle = document.createElement('span');
-        handle.className = 'no-print col-resizer';
-        handle.title = 'Drag to resize column';
-
-        handle.addEventListener('pointerdown', e => {
+        const old = th.querySelector('.col-resizer');
+        if (old) old.remove();
+        th.style.position = 'relative';
+        const handle = document.createElement('div');
+        handle.className = 'col-resizer no-print';
+        handle.addEventListener('pointerdown', (e) => {
           e.preventDefault();
-          e.stopPropagation();
-          const startX = e.clientX;
-          const tableWidth = table.getBoundingClientRect().width || 820;
-          const startLeft = transcriptColWidths[idx];
-          const startRight = transcriptColWidths[idx + 1];
-          const minPct = 5;
-
           handle.classList.add('resizing');
-          handle.setPointerCapture(e.pointerId);
+          const startX = e.clientX;
+          const tableWidth = table.getBoundingClientRect().width || 800;
+          const startW = transcriptColWidths[idx];
+          const nextW = transcriptColWidths[idx + 1];
 
-          const onMove = moveEvent => {
-            const deltaPct = ((moveEvent.clientX - startX) / tableWidth) * 100;
-            const maxShiftRight = startRight - minPct;
-            const minShiftLeft = -(startLeft - minPct);
-            const clampedDelta = Math.max(minShiftLeft, Math.min(maxShiftRight, deltaPct));
-
-            transcriptColWidths[idx] = Number((startLeft + clampedDelta).toFixed(2));
-            transcriptColWidths[idx + 1] = Number((startRight - clampedDelta).toFixed(2));
-
+          const onMove = (ev) => {
+            const deltaPct = ((ev.clientX - startX) / tableWidth) * 100;
+            const minPct = 5;
+            const clampedDelta = Math.max(-(startW - minPct), Math.min(nextW - minPct, deltaPct));
+            transcriptColWidths[idx] = +(startW + clampedDelta).toFixed(2);
+            transcriptColWidths[idx + 1] = +(nextW - clampedDelta).toFixed(2);
             ths[idx].style.width = `${transcriptColWidths[idx]}%`;
             ths[idx + 1].style.width = `${transcriptColWidths[idx + 1]}%`;
           };
@@ -2370,15 +3244,17 @@
       officerPin = leadVal;
       assistantOfficerPin = asstVal;
       saveToCloud();
-      showToast('Officer PINs updated & synced!');
+      showToast('Officer settings & PINs updated!');
     };
 
     window.updateMemberPin = function(memberId, newPin) {
       const m = members.find(x => x.id === memberId);
       if (!m) return;
       m.pin = (newPin || '1234').trim();
+      if (m.pin === '1234') m.accountClaimed = false;
       saveToCloud();
-      showToast(`Updated login PIN for ${m.name} to ${m.pin}`);
+      renderCrewSummary();
+      showToast(`Reset PIN for ${m.name} to ${m.pin}${m.pin === '1234' ? ' (will prompt password change on next login)' : ''}`);
     };
 
     window.updateMemberDateOfficer = function(memberId, field, newDate) {
@@ -2430,6 +3306,10 @@
 
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 divide-x divide-slate-200';
+        const isClaimed = !!m.accountClaimed && (m.pin || '1234') !== '1234';
+        const claimBadge = isClaimed
+          ? '<span class="bg-emerald-100 text-emerald-950 border border-emerald-300 px-1.5 py-0.2 rounded text-[7px] font-black uppercase">Claimed</span>'
+          : '<span class="bg-amber-100 text-amber-950 border border-amber-300 px-1.5 py-0.2 rounded text-[7px] font-black uppercase">Unclaimed</span>';
         tr.innerHTML = `
           <td class="py-1.5 px-2.5 font-black text-slate-900">${m.displayName}</td>
           <td class="py-1.5 px-1.5 text-center font-semibold">${m.level}</td>
@@ -2445,7 +3325,11 @@
             <input type="date" value="${m.recertDue || ''}" onchange="updateMemberDateOfficer('${m.id}', 'recertDue', this.value)" class="border rounded px-1 py-0.5 font-mono text-[8.5px] font-bold ${recCls}">
           </td>
           <td class="no-print py-1 px-1.5 text-center">
-            <input type="text" value="${m.pin || '1234'}" maxlength="6" onchange="updateMemberPin('${m.id}', this.value)" class="w-14 border border-slate-300 rounded px-1 py-0.5 font-mono text-center font-bold bg-slate-50">
+            <div class="flex items-center justify-center gap-1">
+              ${claimBadge}
+              <input type="text" value="${m.pin || '1234'}" maxlength="12" title="Set to 1234 to require password reset on next login" onchange="updateMemberPin('${m.id}', this.value)" class="w-14 border border-slate-300 rounded px-1 py-0.5 font-mono text-center font-bold bg-slate-50">
+              <button type="button" onclick="copyMemberInvite('${m.id}')" title="Copy first-time login invite message" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-1.5 py-0.5 rounded text-[7.5px] cursor-pointer">Copy Invite</button>
+            </div>
           </td>
         `;
         tbody.appendChild(tr);
