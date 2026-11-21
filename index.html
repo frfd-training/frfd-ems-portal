@@ -131,7 +131,7 @@
             Transcripts
           </button>
           <button type="button" data-tab="crew" onclick="switchTab('crew')" class="nav-tab rounded-lg px-3 py-1.5 text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700 inline-flex items-center gap-1.5">
-            <span>Crew &amp; Alerts</span>
+            <span>Members</span>
             <span id="crewCountBadge" class="rounded-full bg-teal-200 text-slate-950 px-2 py-0.5 text-[11px] font-black">0</span>
           </button>
           <button type="button" data-tab="roles" onclick="switchTab('roles')" class="nav-tab rounded-lg px-3 py-1.5 text-xs font-bold bg-slate-800 text-slate-200 hover:bg-slate-700">
@@ -330,7 +330,7 @@
             </button>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <button type="button" onclick="manualRecoverLegacyData()" class="rounded-lg border border-sky-300 bg-sky-50 hover:bg-sky-100 text-sky-950 px-3 py-1.5 text-xs font-extrabold">
+            <button type="button" id="ledgerRecoverBtn" onclick="manualRecoverLegacyData()" class="hidden rounded-lg border border-sky-300 bg-sky-50 hover:bg-sky-100 text-sky-950 px-3 py-1.5 text-xs font-extrabold">
               Recover Previous Site Trainings &amp; Crew
             </button>
             <button type="button" onclick="startNewSessionForm()" class="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-bold">
@@ -384,7 +384,7 @@
             </div>
             <div>
               <label for="sessionHours" class="block text-xs font-bold uppercase text-slate-700 mb-1">Total Hours</label>
-              <input id="sessionHours" type="number" step="0.25" min="0.25" required placeholder="e.g. 2.0" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+              <input id="sessionHours" type="number" step="0.25" min="0.25" required oninput="updateNremtDomainSuggestion()" placeholder="e.g. 2.0" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
             </div>
             <div>
               <label for="sessionScope" class="block text-xs font-bold uppercase text-slate-700 mb-1">Training Type</label>
@@ -397,85 +397,102 @@
 
           <div>
             <label for="sessionTitle" class="block text-xs font-bold uppercase text-slate-700 mb-1">Course / Topic Title</label>
-            <input id="sessionTitle" type="text" required placeholder="e.g. Airway Management & Supraglottic Insertion" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
+            <input id="sessionTitle" type="text" required oninput="updateNremtDomainSuggestion()" placeholder="e.g. Airway Management & Supraglottic Insertion" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
           </div>
 
           <div>
             <label for="sessionDesc" class="block text-xs font-bold uppercase text-slate-700 mb-1">Summary / Objectives</label>
-            <textarea id="sessionDesc" rows="2" placeholder="Brief description of skills, scenarios, or CAPCE topic..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm"></textarea>
+            <textarea id="sessionDesc" rows="2" oninput="updateNremtDomainSuggestion()" placeholder="Brief description of skills, scenarios, or CAPCE topic..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm"></textarea>
+          </div>
+
+          <!-- Smart NREMT NCCP Domain Suggestion Box -->
+          <div id="nremtSuggestionBox" class="hidden rounded-xl bg-sky-50 border border-sky-300 p-3.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="text-xs text-sky-950">
+              <div class="font-extrabold uppercase tracking-wide text-sky-800">Suggested NREMT NCCP Placement</div>
+              <div id="nremtSuggestionText" class="font-semibold mt-0.5"></div>
+            </div>
+            <button type="button" onclick="applySuggestedNremtDomains()" class="rounded-lg bg-sky-600 hover:bg-sky-700 text-white px-3.5 py-1.5 text-xs font-extrabold shadow">
+              Apply Suggested Hours
+            </button>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label for="sessionInstructors" class="block text-xs font-bold uppercase text-slate-700 mb-1">Instructor(s)</label>
-              <input id="sessionInstructors" type="text" placeholder="e.g. Burhenn, Jessica; Roth, Matthew" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+              <input id="sessionInstructors" type="text" placeholder="e.g. Burhenn, Jessica; Roth, Matthew S" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
             </div>
             <div>
-              <label for="sessionSource" class="block text-xs font-bold uppercase text-slate-700 mb-1">Source / Accreditation</label>
-              <input id="sessionSource" type="text" placeholder="e.g. FRFD Station 1 Drill / CAPCE" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+              <label for="sessionSource" class="block text-xs font-bold uppercase text-slate-700 mb-1">Training Source / CAPCE ID</label>
+              <input id="sessionSource" type="text" placeholder="FRFD Station 1" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
             </div>
           </div>
 
-          <!-- NCCP Domain Hours -->
-          <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-extrabold uppercase text-slate-800">NCCP Domain Hour Breakdown</span>
+          <!-- NCCP Domain Hours Breakdown -->
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-extrabold uppercase text-slate-800">NCCP Domain Hours Allocation</span>
               <span id="domainSumHint" class="text-xs font-bold text-blue-700">Allocated: 0.00h</span>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div>
-                <label for="domAirway" class="block text-[11px] font-bold text-slate-700 mb-1">Airway</label>
+                <label for="domAirway" class="block text-[11px] font-bold text-sky-900 mb-1">Airway</label>
                 <input id="domAirway" type="number" step="0.25" min="0" value="0" oninput="updateDomainSum()" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm" />
               </div>
               <div>
-                <label for="domCardio" class="block text-[11px] font-bold text-slate-700 mb-1">Cardiovascular</label>
+                <label for="domCardio" class="block text-[11px] font-bold text-rose-900 mb-1">Cardio</label>
                 <input id="domCardio" type="number" step="0.25" min="0" value="0" oninput="updateDomainSum()" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm" />
               </div>
               <div>
-                <label for="domTrauma" class="block text-[11px] font-bold text-slate-700 mb-1">Trauma</label>
+                <label for="domTrauma" class="block text-[11px] font-bold text-orange-900 mb-1">Trauma</label>
                 <input id="domTrauma" type="number" step="0.25" min="0" value="0" oninput="updateDomainSum()" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm" />
               </div>
               <div>
-                <label for="domMedical" class="block text-[11px] font-bold text-slate-700 mb-1">Medical</label>
+                <label for="domMedical" class="block text-[11px] font-bold text-purple-900 mb-1">Medical</label>
                 <input id="domMedical" type="number" step="0.25" min="0" value="0" oninput="updateDomainSum()" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm" />
               </div>
               <div>
-                <label for="domOps" class="block text-[11px] font-bold text-slate-700 mb-1">Operations</label>
+                <label for="domOps" class="block text-[11px] font-bold text-emerald-900 mb-1">Operations</label>
                 <input id="domOps" type="number" step="0.25" min="0" value="0" oninput="updateDomainSum()" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm" />
               </div>
             </div>
-            <label class="mt-3 inline-flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
-              <input id="sessionPeds" type="checkbox" class="rounded border-slate-300 text-blue-600" />
+            <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer pt-1">
+              <input id="sessionPeds" type="checkbox" class="rounded border-slate-300 text-amber-600" />
               <span>Includes Pediatric (PEDS) Component</span>
             </label>
           </div>
 
+          <!-- Roster Photo Attachments (Front & Back) -->
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-3">
+            <div class="text-xs font-extrabold uppercase text-slate-800">Signed Roster Photo Attachments (Front &amp; Back)</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Front of Roster</label>
+                <input type="file" accept="image/*" onchange="handleRosterImageUpload(event, 'front')" class="text-xs" />
+                <div id="rosterFrontPreview" class="mt-2"></div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Back of Roster</label>
+                <input type="file" accept="image/*" onchange="handleRosterImageUpload(event, 'back')" class="text-xs" />
+                <div id="rosterBackPreview" class="mt-2"></div>
+              </div>
+            </div>
+          </div>
+
           <!-- Crew Attendance Checkboxes -->
-          <div>
-            <div class="text-xs font-extrabold uppercase text-slate-800 mb-2">Crew Attendance</div>
-            <div id="attendeeCheckboxesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto rounded-xl border border-slate-200 p-3 bg-slate-50"></div>
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold uppercase text-slate-800">Crew Attendance Roster</span>
+              <span class="text-[11px] text-slate-500">Bekah Wick is automatically flagged as Held (MT State ECP)</span>
+            </div>
+            <div id="attendeeCheckboxesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"></div>
           </div>
 
-          <!-- Front & Back Roster Image Attachments -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50">
-              <label class="block text-xs font-bold text-slate-800 mb-1.5">+ Front of Roster (Photo / Scan)</label>
-              <input type="file" accept="image/*" onchange="handleRosterImageUpload(event, 'front')" class="text-xs" />
-              <div id="rosterFrontPreview" class="mt-2"></div>
-            </div>
-            <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50">
-              <label class="block text-xs font-bold text-slate-800 mb-1.5">+ Back of Roster (Photo / Scan)</label>
-              <input type="file" accept="image/*" onchange="handleRosterImageUpload(event, 'back')" class="text-xs" />
-              <div id="rosterBackPreview" class="mt-2"></div>
-            </div>
-          </div>
-
-          <div class="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-200">
-            <button type="button" onclick="cancelEditSession()" class="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2.5 text-xs sm:text-sm font-bold">
-              Cancel &amp; Return to Ledger
+          <div class="flex flex-wrap justify-end gap-2 pt-2">
+            <button type="button" onclick="cancelEditSession()" class="rounded-xl border border-slate-300 bg-white hover:bg-slate-50 px-4 py-2 text-xs sm:text-sm font-bold text-slate-700">
+              Cancel
             </button>
-            <button type="submit" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 text-xs sm:text-sm font-extrabold shadow">
-              Save Training Session &amp; Update Transcripts
+            <button type="submit" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 text-xs sm:text-sm font-extrabold shadow">
+              Save Training Session
             </button>
           </div>
         </form>
@@ -512,18 +529,23 @@
             <h2 class="text-xl font-black text-slate-900">Individual Provider Transcripts</h2>
             <p class="text-xs sm:text-sm text-slate-500">Select any active or former/inactive provider to view or print their transcript.</p>
           </div>
-          <select id="officerTranscriptMemberSelect" onchange="renderOfficerTranscript()" class="rounded-xl border border-slate-300 px-3.5 py-2 text-sm font-semibold"></select>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="officerTranscriptMemberSelect" onchange="renderOfficerTranscript()" aria-label="Select Provider Transcript" class="rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm font-bold bg-white"></select>
+            <button type="button" onclick="window.print()" class="rounded-xl bg-slate-900 text-white px-3.5 py-2 text-xs font-bold">
+              Print Transcript
+            </button>
+          </div>
         </div>
         <div id="officerTranscriptBody"></div>
       </div>
     </section>
 
-    <!-- OFFICER: CREW & CREDENTIALS VIEW -->
+    <!-- OFFICER: MEMBERS & CREDENTIALS VIEW -->
     <section id="view-crew" class="portal-view hidden">
       <div class="rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
-            <h2 class="text-xl font-black text-slate-900">Station 1 Crew Roster &amp; Credentials</h2>
+            <h2 class="text-xl font-black text-slate-900">Station 1 Members &amp; Credentials</h2>
             <p class="text-xs sm:text-sm text-slate-500">
               Manage active and former/inactive members, edit certifications, and update member PINs.
             </p>
@@ -532,15 +554,16 @@
             <span id="crewRosterSummaryBadge" class="rounded-full bg-teal-100 text-teal-950 border border-teal-300 px-3 py-1 text-xs font-extrabold">
               0 Active • 0 Former / Inactive
             </span>
-            <button type="button" onclick="switchTab('roles')" class="rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-950 border border-indigo-200 px-3 py-1.5 text-xs font-extrabold">
+            <button type="button" id="crewManageRolesShortcutBtn" onclick="switchTab('roles')" class="rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-950 border border-indigo-200 px-3 py-1.5 text-xs font-extrabold">
               Manage Officer Roles →
             </button>
           </div>
         </div>
 
-        <!-- Interior Demo Walkthrough Account Info for Officer Testing -->
-        <div class="rounded-xl bg-blue-50 border border-blue-200 p-3.5 mb-5 flex flex-wrap items-center justify-between gap-2 text-xs text-blue-950">
+        <!-- Lead Admin Only: Demo Walkthrough Account Info -->
+        <div id="leadAdminDemoBox" class="hidden rounded-xl bg-blue-50 border border-blue-200 p-3.5 mb-5 flex flex-wrap items-center justify-between gap-2 text-xs text-blue-950">
           <div>
+            <span class="rounded bg-blue-200 text-blue-950 px-1.5 py-0.5 text-[10px] font-black uppercase mr-1.5">Lead Admin Only</span>
             <span class="font-extrabold">Demo Walkthrough Member Account:</span>
             <span class="font-semibold">Name: <span class="font-mono font-bold">Test Provider, Demo</span> • ID: <span class="font-mono font-bold">TEST-001</span> • PIN: <span class="font-mono font-bold">1234</span></span>
           </div>
@@ -549,23 +572,29 @@
           </button>
         </div>
 
-        <!-- Merge Duplicate Member Profiles Tool -->
-        <div class="rounded-xl bg-amber-50 border border-amber-200 p-3.5 mb-5 flex flex-wrap items-end gap-3 text-xs">
-          <div class="flex-1 min-w-[200px]">
-            <label for="mergeSourceMemberSelect" class="block font-extrabold uppercase text-amber-950 mb-1">Duplicate Profile to Merge &amp; Remove</label>
-            <select id="mergeSourceMemberSelect" class="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900"></select>
+        <!-- Lead Admin Only: Merge Duplicate Member Profiles Tool -->
+        <div id="leadAdminMergeBox" class="hidden rounded-xl bg-amber-50 border border-amber-200 p-3.5 mb-5 space-y-2 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="rounded bg-amber-200 text-amber-950 px-1.5 py-0.5 text-[10px] font-black uppercase">Lead Admin Only</span>
+            <span class="font-extrabold text-amber-950">Merge &amp; Remove Duplicate Member Profiles</span>
           </div>
-          <div class="flex-1 min-w-[200px]">
-            <label for="mergeTargetMemberSelect" class="block font-extrabold uppercase text-amber-950 mb-1">Primary Profile to Keep (Receives All Trainings)</label>
-            <select id="mergeTargetMemberSelect" class="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900"></select>
+          <div class="flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[200px]">
+              <label for="mergeSourceMemberSelect" class="block font-extrabold uppercase text-amber-950 mb-1">Duplicate Profile to Merge &amp; Remove</label>
+              <select id="mergeSourceMemberSelect" class="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900"></select>
+            </div>
+            <div class="flex-1 min-w-[200px]">
+              <label for="mergeTargetMemberSelect" class="block font-extrabold uppercase text-amber-950 mb-1">Primary Profile to Keep (Receives All Trainings)</label>
+              <select id="mergeTargetMemberSelect" class="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900"></select>
+            </div>
+            <button type="button" onclick="mergeDuplicateMembers()" class="rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-extrabold px-4 py-2 text-xs sm:text-sm shadow">
+              Merge Profiles &amp; Transcripts
+            </button>
           </div>
-          <button type="button" onclick="mergeDuplicateMembers()" class="rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-extrabold px-4 py-2 text-xs sm:text-sm shadow">
-            Merge Profiles &amp; Transcripts
-          </button>
         </div>
 
         <!-- Add Active or Former Member Form -->
-        <form onsubmit="addCrewMember(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 mb-5">
+        <form id="addCrewMemberForm" onsubmit="addCrewMember(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 mb-5">
           <input id="newMemberName" type="text" required placeholder="Last, First Name" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm" />
           <select id="newMemberLevel" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm">
             <option value="EMR">EMR</option>
@@ -689,12 +718,33 @@
     </section>
 
     <!-- OFFICER: INBOX & ALERTS VIEW -->
-    <section id="view-inbox" class="portal-view hidden">
-      <div class="rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200">
-        <h2 class="text-xl font-black text-slate-900">Officer Inbox &amp; Crew Messages</h2>
-        <p class="text-xs sm:text-sm text-slate-500 mt-0.5 mb-4">
-          Messages and questions sent by crew members from the Member Portal.
-        </p>
+    <section id="view-inbox" class="portal-view hidden space-y-5">
+      <!-- Renewal & License Expiration Alerts Card -->
+      <div class="rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-xl font-black text-slate-900">Upcoming Renewals &amp; License Expiration Alerts</h2>
+            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Active members with overdue or upcoming NREMT / State Recertification, FRFD CE Cutoff, or AHA BLS Card expirations (next 120 days).
+            </p>
+          </div>
+          <span id="expirationAlertsSummary" class="rounded-full bg-amber-100 text-amber-950 border border-amber-300 px-3 py-1 text-xs font-extrabold">
+            0 Alerts
+          </span>
+        </div>
+        <div id="expirationAlertsList" class="space-y-2.5"></div>
+      </div>
+
+      <!-- Crew Messages Card -->
+      <div class="rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-xl font-black text-slate-900">Officer Inbox &amp; Crew Messages</h2>
+            <p id="inboxVisibilityNote" class="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Messages and questions sent by crew members from the Member Portal.
+            </p>
+          </div>
+        </div>
         <div id="officerInboxList" class="space-y-3"></div>
       </div>
     </section>
@@ -778,14 +828,20 @@
     <section id="view-memberMessages" class="portal-view hidden">
       <div class="rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-slate-200 max-w-3xl mx-auto space-y-5">
         <div>
-          <h2 class="text-xl font-black text-slate-900">Messages with Training Officer</h2>
-          <p class="text-xs sm:text-sm text-slate-500">Ask questions about NREMT posting, transcripts, or credentials.</p>
+          <h2 class="text-xl font-black text-slate-900">Messages with Training Officers</h2>
+          <p class="text-xs sm:text-sm text-slate-500">Choose who to message about NREMT posting, transcripts, or credentials. Lead Training Officer has oversight of all messages.</p>
         </div>
-        <form onsubmit="sendMemberMessage(event)" class="flex flex-col sm:flex-row gap-2">
-          <input id="memberMessageInput" type="text" required placeholder="Write a message to the Training Officer..." class="flex-1 rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
-          <button type="submit" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-bold">
-            Send Message
-          </button>
+        <form onsubmit="sendMemberMessage(event)" class="space-y-3 rounded-xl bg-slate-50 border border-slate-200 p-4">
+          <div>
+            <label for="memberMessageRecipient" class="block text-xs font-bold uppercase text-slate-700 mb-1">Send To</label>
+            <select id="memberMessageRecipient" class="w-full sm:w-80 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold"></select>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input id="memberMessageInput" type="text" required placeholder="Write a message to the Training Officer..." class="flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm" />
+            <button type="submit" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-bold">
+              Send Message
+            </button>
+          </div>
         </form>
         <div id="memberMessagesList" class="space-y-2.5"></div>
       </div>
@@ -1365,7 +1421,7 @@
     let selectedSessionIds = new Set();
     let pendingRosterFrontDataUrl = '';
     let pendingRosterBackDataUrl = '';
-
+    let lastSuggestedDomains = null;
     let state = {
       members: [],
       sessions: [],
@@ -1710,6 +1766,13 @@
       return state.members.find(m => m.id === activeOfficerId) || null;
     }
 
+    function isLeadAdmin() {
+      if (!isEffectiveOfficer()) return false;
+      const officer = getCurrentOfficer();
+      if (!officer) return true;
+      return officer.officerRole === 'lead_admin';
+    }
+
     function hasOfficerPermission(permKey) {
       if (!isEffectiveOfficer()) return false;
       const officer = getCurrentOfficer();
@@ -1718,9 +1781,57 @@
       return Boolean(officer.permissions?.[permKey]);
     }
 
+    function getExpirationAlerts() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const alerts = [];
+
+      const checkFields = [
+        { key: 'recertDue', label: 'NREMT / State Recertification' },
+        { key: 'cutoff', label: 'FRFD Internal CE Cutoff' },
+        { key: 'blsExp', label: 'AHA BLS / CPR Card' }
+      ];
+
+      (state.members || []).forEach(m => {
+        if (m.status === 'alumni' || m.id === 'm-test') return;
+        checkFields.forEach(field => {
+          const rawDate = m[field.key];
+          if (!rawDate) return;
+          const parsed = new Date(rawDate + 'T00:00:00');
+          if (Number.isNaN(parsed.getTime())) return;
+          const daysLeft = Math.round((parsed.getTime() - today.getTime()) / msPerDay);
+          if (daysLeft <= 120) {
+            alerts.push({
+              memberId: m.id,
+              memberName: m.name,
+              level: m.level,
+              type: field.label,
+              date: rawDate,
+              daysLeft,
+              severity: daysLeft < 0 ? 'overdue' : daysLeft <= 60 ? 'soon' : 'upcoming'
+            });
+          }
+        });
+      });
+
+      return alerts.sort((a, b) => a.daysLeft - b.daysLeft);
+    }
+
+    function getVisibleOfficerMessages() {
+      const officer = getCurrentOfficer();
+      const lead = isLeadAdmin();
+      return (state.messages || []).filter(msg => {
+        if (lead) return true;
+        if (!msg.recipientOfficerId || msg.recipientOfficerId === 'all') return true;
+        return officer && msg.recipientOfficerId === officer.id;
+      });
+    }
+
     function syncHeaderAndNav() {
       const officerMode = isEffectiveOfficer();
       const isOfficerSession = role === 'officer';
+      const lead = isLeadAdmin();
       const currentOfficer = getCurrentOfficer();
       document.getElementById('officerUtilityGroup').classList.toggle('hidden', !isOfficerSession);
       document.getElementById('officerUtilityGroup').classList.toggle('flex', isOfficerSession);
@@ -1734,6 +1845,11 @@
         previewBanner.classList.toggle('hidden', !(isOfficerSession && previewingAsMember));
       }
 
+      const recoverBtn = document.getElementById('recoverLegacyBtn');
+      const ledgerRecoverBtn = document.getElementById('ledgerRecoverBtn');
+      if (recoverBtn) recoverBtn.classList.toggle('hidden', !lead);
+      if (ledgerRecoverBtn) ledgerRecoverBtn.classList.toggle('hidden', !lead);
+
       const canBackup = hasOfficerPermission('backupRestore');
       const backupBtn = document.getElementById('backupUtilityBtn');
       const restoreLbl = document.getElementById('restoreUtilityLabel');
@@ -1743,6 +1859,7 @@
       document.getElementById('sandboxBanner').classList.toggle('hidden', !sandboxMode);
       const sandboxBtn = document.getElementById('sandboxToggleBtn');
       if (sandboxBtn) {
+        sandboxBtn.classList.toggle('hidden', !lead);
         sandboxBtn.textContent = sandboxMode ? 'Sandbox Demo: ON' : 'Sandbox Demo: OFF';
         sandboxBtn.className = sandboxMode
           ? 'rounded-lg bg-amber-300 text-slate-950 px-3 py-1.5 text-xs font-black ring-2 ring-white'
@@ -1751,7 +1868,9 @@
 
       const selectEl = document.getElementById('previewMemberSelect');
       if (selectEl) {
-        const sortedMembers = [...state.members].sort((a, b) => a.name.localeCompare(b.name));
+        const sortedMembers = [...state.members]
+          .filter(m => lead || m.id !== 'm-test')
+          .sort((a, b) => a.name.localeCompare(b.name));
         selectEl.innerHTML = '<option value="">Preview Member View...</option>' + sortedMembers.map(m =>
           `<option value="${m.id}" ${activeMemberId === m.id && previewingAsMember ? 'selected' : ''}>${m.name} (${m.level})</option>`
         ).join('');
@@ -1768,10 +1887,18 @@
         : `Crew Portal • ${currentMember ? `${currentMember.name} (${currentMember.level})` : 'Member View'}`;
 
       document.getElementById('pendingApprovalsBadge').textContent = String(state.pendingCe.filter(c => c.status === 'pending').length);
+      const visibleMemberCount = state.members.filter(m => lead || m.id !== 'm-test').length;
       const crewBadgeEl = document.getElementById('crewCountBadge');
-      if (crewBadgeEl) crewBadgeEl.textContent = String(state.members.length);
-      document.getElementById('officerInboxBadge').textContent = String(state.messages.filter(msg => msg.fromMember).length);
-      document.getElementById('memberMsgBadge').textContent = String(state.messages.length);
+      if (crewBadgeEl) crewBadgeEl.textContent = String(visibleMemberCount);
+
+      const urgentAlertsCount = getExpirationAlerts().filter(a => a.severity === 'overdue' || a.severity === 'soon').length;
+      const visibleMsgCount = getVisibleOfficerMessages().filter(msg => msg.fromMember).length;
+      document.getElementById('officerInboxBadge').textContent = String(urgentAlertsCount + visibleMsgCount);
+
+      const memberMsgCount = currentMember
+        ? state.messages.filter(msg => msg.memberId === currentMember.id).length
+        : 0;
+      document.getElementById('memberMsgBadge').textContent = String(memberMsgCount);
     }
 
     function previewMemberPortal(memberId) {
@@ -1868,6 +1995,7 @@
           renderMemberProfile();
           break;
         case 'memberMessages':
+          populateMemberMessageRecipients();
           renderMemberMessages();
           break;
       }
@@ -2135,6 +2263,7 @@
       renderRosterPreviews();
       renderAttendeeCheckboxes([]);
       updateDomainSum();
+      updateNremtDomainSuggestion();
     }
 
     function cancelEditSession() {
@@ -2171,6 +2300,7 @@
       renderRosterPreviews();
       renderAttendeeCheckboxes(s.attendees || []);
       updateDomainSum();
+      updateNremtDomainSuggestion();
     }
 
     function deleteSession(sessionId) {
@@ -2210,6 +2340,84 @@
         .reduce((acc, id) => acc + Number(document.getElementById(id)?.value || 0), 0);
       const hint = document.getElementById('domainSumHint');
       if (hint) hint.textContent = `Allocated: ${sum.toFixed(2)}h`;
+    }
+
+    function detectSuggestedNremtDomains(title, desc, totalHours) {
+      const text = `${title || ''} ${desc || ''}`.toLowerCase();
+      if (!text.trim()) return null;
+
+      const keywordRules = {
+        airway: ['airway', 'respiratory', 'ventilat', 'intubat', 'supraglottic', 'igel', 'i-gel', 'cpap', 'capnograph', 'bvm', 'oxygen', 'asthma', 'copd', 'choking', 'suction', 'trach'],
+        cardio: ['cpr', 'bls', 'aed', 'cardiac', 'cardio', 'heart', 'stemi', '12-lead', '12 lead', 'ekg', 'ecg', 'acls', 'stroke', 'chest pain', 'acs', 'arrhythmia', 'resuscitation', 'megacode', 'pit crew'],
+        trauma: ['trauma', 'hemorrhage', 'bleed', 'tourniquet', 'wound', 'fracture', 'splint', 'spinal', 'smr', 'c-spine', 'pelvic', 'burn', 'shock', 'chest seal', 'pneumothorax', 'head injury', 'tbi', 'mvc', 'extrication'],
+        medical: ['medical', 'sepsis', 'diabetic', 'glucose', 'seizure', 'overdose', 'naloxone', 'narcan', 'tox', 'anaphylaxis', 'epi', 'ob', 'childbirth', 'delivery', 'neonatal', 'fever', 'allergic', 'behavioral', 'psych', 'abdominal', 'hypothermia', 'heat stroke', 'environmental'],
+        ops: ['operation', 'mci', 'triage', 'start', 'jumpstart', 'lz', 'landing zone', 'helicopter', 'radio', 'comm', 'ics', 'safety', 'scene', 'driver', 'evoc', 'wildland', 'hazmat', 'documentation', 'pcr', 'hipaa', 'protocol', 'ambulance', 'staging', 'crew resource']
+      };
+
+      const matchedKeys = Object.entries(keywordRules)
+        .filter(([, words]) => words.some(w => text.includes(w)))
+        .map(([key]) => key);
+
+      const suggestsPeds = ['pediatric', 'peds', 'child', 'infant', 'neonatal', 'newborn', 'pals', 'jumpstart', 'febrile'].some(w => text.includes(w));
+
+      if (matchedKeys.length === 0 && !suggestsPeds) return null;
+
+      const hrs = Number(totalHours) > 0 ? Number(totalHours) : 1.0;
+      const domains = { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 0 };
+      const activeKeys = matchedKeys.length > 0 ? matchedKeys.slice(0, 2) : ['medical'];
+
+      if (activeKeys.length === 1) {
+        domains[activeKeys[0]] = Math.round(hrs * 4) / 4;
+      } else {
+        const firstHalf = Math.round((hrs / 2) * 4) / 4;
+        const secondHalf = Math.max(0.25, Math.round((hrs - firstHalf) * 4) / 4);
+        domains[activeKeys[0]] = firstHalf;
+        domains[activeKeys[1]] = secondHalf;
+      }
+
+      return { domains, activeKeys, suggestsPeds };
+    }
+
+    function updateNremtDomainSuggestion() {
+      const box = document.getElementById('nremtSuggestionBox');
+      const textEl = document.getElementById('nremtSuggestionText');
+      if (!box || !textEl) return;
+
+      const title = document.getElementById('sessionTitle')?.value || '';
+      const desc = document.getElementById('sessionDesc')?.value || '';
+      const hrs = document.getElementById('sessionHours')?.value || 0;
+
+      const suggestion = detectSuggestedNremtDomains(title, desc, hrs);
+      lastSuggestedDomains = suggestion;
+
+      if (!suggestion) {
+        box.classList.add('hidden');
+        return;
+      }
+
+      const parts = Object.entries(suggestion.domains)
+        .filter(([, val]) => val > 0)
+        .map(([k, val]) => `${DOMAIN_LABELS[k] || k}: ${val}h`);
+      if (suggestion.suggestsPeds) {
+        parts.push('Pediatric (PEDS) Component ✓');
+      }
+
+      textEl.textContent = parts.join(' • ');
+      box.classList.remove('hidden');
+    }
+
+    function applySuggestedNremtDomains() {
+      if (!lastSuggestedDomains) return;
+      document.getElementById('domAirway').value = lastSuggestedDomains.domains.airway || 0;
+      document.getElementById('domCardio').value = lastSuggestedDomains.domains.cardio || 0;
+      document.getElementById('domTrauma').value = lastSuggestedDomains.domains.trauma || 0;
+      document.getElementById('domMedical').value = lastSuggestedDomains.domains.medical || 0;
+      document.getElementById('domOps').value = lastSuggestedDomains.domains.ops || 0;
+      if (lastSuggestedDomains.suggestsPeds) {
+        document.getElementById('sessionPeds').checked = true;
+      }
+      updateDomainSum();
+      showToast('Applied suggested NREMT NCCP domain hours.');
     }
 
     function handleRosterImageUpload(event, side) {
@@ -2520,7 +2728,10 @@
     function populateOfficerTranscriptSelect() {
       const sel = document.getElementById('officerTranscriptMemberSelect');
       if (!sel) return;
-      const sorted = [...state.members].sort((a, b) => a.name.localeCompare(b.name));
+      const lead = isLeadAdmin();
+      const sorted = [...state.members]
+        .filter(m => lead || m.id !== 'm-test')
+        .sort((a, b) => a.name.localeCompare(b.name));
       sel.innerHTML = sorted.map(m => `<option value="${m.id}">${m.name} (${m.level}${m.status === 'alumni' ? ' • Former / Inactive' : ''})</option>`).join('');
     }
 
@@ -2926,19 +3137,31 @@
     function renderCrewCards() {
       const grid = document.getElementById('crewCardsGrid');
       if (!grid) return;
-      const activeCount = state.members.filter(m => m.status !== 'alumni').length;
-      const formerCount = state.members.filter(m => m.status === 'alumni').length;
+      const lead = isLeadAdmin();
+      const canManageCrew = hasOfficerPermission('manageCrew');
+
+      const demoBox = document.getElementById('leadAdminDemoBox');
+      const mergeBox = document.getElementById('leadAdminMergeBox');
+      const addForm = document.getElementById('addCrewMemberForm');
+      const rolesShortcut = document.getElementById('crewManageRolesShortcutBtn');
+      if (demoBox) demoBox.classList.toggle('hidden', !lead);
+      if (mergeBox) mergeBox.classList.toggle('hidden', !lead);
+      if (addForm) addForm.classList.toggle('hidden', !canManageCrew);
+      if (rolesShortcut) rolesShortcut.classList.toggle('hidden', !hasOfficerPermission('manageRoles'));
+
+      const visibleMembers = state.members.filter(m => lead || m.id !== 'm-test');
+      const activeCount = visibleMembers.filter(m => m.status !== 'alumni').length;
+      const formerCount = visibleMembers.filter(m => m.status === 'alumni').length;
       const summaryBadge = document.getElementById('crewRosterSummaryBadge');
       if (summaryBadge) {
         summaryBadge.textContent = `${activeCount} Active • ${formerCount} Former / Inactive`;
       }
 
-      const canManageCrew = hasOfficerPermission('manageCrew');
-      const sorted = [...state.members].sort((a, b) => a.name.localeCompare(b.name));
+      const sorted = [...visibleMembers].sort((a, b) => a.name.localeCompare(b.name));
 
       const mergeSourceSel = document.getElementById('mergeSourceMemberSelect');
       const mergeTargetSel = document.getElementById('mergeTargetMemberSelect');
-      if (mergeSourceSel && mergeTargetSel) {
+      if (lead && mergeSourceSel && mergeTargetSel) {
         const optionsHtml = sorted.map(m => {
           const count = state.sessions.filter(s => (s.attendees || []).some(a => String(a).toLowerCase().trim() === m.name.toLowerCase().trim())).length;
           return `<option value="${m.id}">${m.name} (${m.level} • ${count} trainings)</option>`;
@@ -3044,14 +3267,14 @@
     }
 
     function mergeDuplicateMembers() {
-      if (!hasOfficerPermission('manageCrew')) {
-        showToast('Your officer role does not have permission to merge profiles.');
+      if (!isLeadAdmin()) {
+        showToast('Only the Lead Admin can merge or remove duplicate profiles.');
         return;
       }
       const sourceId = document.getElementById('mergeSourceMemberSelect')?.value;
       const targetId = document.getElementById('mergeTargetMemberSelect')?.value;
       if (!sourceId || !targetId) {
-        showToast('Please choose both the duplicate profile and the primary profile to keep.');
+        showToast('Please select both the duplicate profile and the primary profile.');
         return;
       }
       if (sourceId === targetId) {
@@ -3269,24 +3492,65 @@
       `).join('');
     }
 
+    function populateMemberMessageRecipients() {
+      const sel = document.getElementById('memberMessageRecipient');
+      if (!sel) return;
+      const officers = state.members
+        .filter(m => m.officerRole && m.officerRole !== 'none')
+        .sort((a, b) => (a.officerRole === 'lead_admin' ? -1 : 1) || a.name.localeCompare(b.name));
+
+      sel.innerHTML = '<option value="all">All Training Officers</option>' + officers.map(off => {
+        const title = off.officerRole === 'lead_admin' ? 'Lead Training Officer' : 'Assistant Training Officer';
+        return `<option value="${off.id}">${off.name} (${title})</option>`;
+      }).join('');
+    }
+
     function sendMemberMessage(e) {
       e.preventDefault();
       const member = getCurrentMember();
       const text = document.getElementById('memberMessageInput').value.trim();
+      const recipientId = document.getElementById('memberMessageRecipient')?.value || 'all';
       if (!member || !text) return;
+
+      const recipientObj = recipientId === 'all' ? null : state.members.find(m => m.id === recipientId);
+      const recipientName = recipientObj ? recipientObj.name : 'All Training Officers';
+
       state.messages.unshift({
         id: 'msg-' + Date.now(),
         memberId: member.id,
         memberName: member.name,
+        recipientOfficerId: recipientId,
+        recipientName,
         text,
         timestamp: new Date().toLocaleString(),
-        fromMember: true
+        fromMember: true,
+        replies: []
       });
       saveToCloud();
       document.getElementById('memberMessageInput').value = '';
       renderMemberMessages();
       syncHeaderAndNav();
-      showToast('Message sent to Training Officer');
+      showToast(`Message sent to ${recipientName}`);
+    }
+
+    function replyToMemberMessage(e, messageId) {
+      e.preventDefault();
+      const input = document.getElementById(`replyInput-${messageId}`);
+      const text = (input?.value || '').trim();
+      if (!text) return;
+      const msg = state.messages.find(m => m.id === messageId);
+      if (!msg) return;
+      const officer = getCurrentOfficer();
+      msg.replies = Array.isArray(msg.replies) ? msg.replies : [];
+      msg.replies.push({
+        senderName: officer ? officer.name : 'Training Officer',
+        text,
+        timestamp: new Date().toLocaleString()
+      });
+      saveToCloud();
+      renderOfficerInbox();
+      syncHeaderAndNav();
+      showToast(`Reply sent to ${msg.memberName}`);
     }
 
     function renderMemberMessages() {
@@ -3298,27 +3562,136 @@
         list.innerHTML = '<div class="text-xs text-slate-500">No messages yet.</div>';
         return;
       }
-      list.innerHTML = mine.map(m => `
-        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <div class="text-[11px] font-bold text-slate-500">${m.memberName} • ${m.timestamp}</div>
-          <div class="text-sm text-slate-900 mt-0.5">${m.text}</div>
-        </div>
-      `).join('');
+      list.innerHTML = mine.map(m => {
+        const repliesHtml = (m.replies || []).map(r => `
+          <div class="mt-2 ml-3 rounded-lg bg-blue-50 border border-blue-200 p-2.5">
+            <div class="text-[11px] font-extrabold text-blue-900">Reply from ${r.senderName} • ${r.timestamp}</div>
+            <div class="text-xs sm:text-sm text-slate-900 mt-0.5">${r.text}</div>
+          </div>
+        `).join('');
+        return `
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+            <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] font-bold text-slate-500">
+              <span>${m.memberName} • ${m.timestamp}</span>
+              <span class="rounded-full bg-slate-200 text-slate-800 px-2 py-0.5 font-extrabold">To: ${m.recipientName || 'All Training Officers'}</span>
+            </div>
+            <div class="text-sm text-slate-900 mt-1">${m.text}</div>
+            ${repliesHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderExpirationAlerts() {
+      const list = document.getElementById('expirationAlertsList');
+      const summary = document.getElementById('expirationAlertsSummary');
+      if (!list) return;
+
+      const alerts = getExpirationAlerts();
+      const overdueCount = alerts.filter(a => a.severity === 'overdue').length;
+      const soonCount = alerts.filter(a => a.severity === 'soon').length;
+
+      if (summary) {
+        summary.textContent = `${overdueCount} Overdue • ${soonCount} Due ≤ 60d • ${alerts.length} Total`;
+        summary.className = overdueCount > 0
+          ? 'rounded-full bg-rose-100 text-rose-950 border border-rose-300 px-3 py-1 text-xs font-extrabold'
+          : soonCount > 0
+            ? 'rounded-full bg-amber-100 text-amber-950 border border-amber-300 px-3 py-1 text-xs font-extrabold'
+            : 'rounded-full bg-emerald-100 text-emerald-950 border border-emerald-300 px-3 py-1 text-xs font-extrabold';
+      }
+
+      if (alerts.length === 0) {
+        list.innerHTML = '<div class="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-sm font-bold text-emerald-900">No active members have certifications or cutoffs expiring within the next 120 days.</div>';
+        return;
+      }
+
+      const canManageCrew = hasOfficerPermission('manageCrew');
+      list.innerHTML = alerts.map(a => {
+        const badgeClass = a.severity === 'overdue'
+          ? 'bg-rose-100 text-rose-900 border-rose-300'
+          : a.severity === 'soon'
+            ? 'bg-amber-100 text-amber-950 border-amber-300'
+            : 'bg-sky-100 text-sky-950 border-sky-300';
+        const statusText = a.daysLeft < 0
+          ? `Expired ${Math.abs(a.daysLeft)}d ago`
+          : a.daysLeft === 0
+            ? 'Due Today'
+            : `Due in ${a.daysLeft} days`;
+
+        return `
+          <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-extrabold text-slate-900 text-sm">${a.memberName}</span>
+                <span class="rounded bg-blue-100 text-blue-900 px-1.5 py-0.5 text-[10px] font-extrabold">${a.level}</span>
+                <span class="rounded-full border px-2.5 py-0.5 text-[11px] font-extrabold ${badgeClass}">${statusText}</span>
+              </div>
+              <div class="text-xs text-slate-600 mt-1">
+                <span class="font-bold text-slate-800">${a.type}</span> — Date: <span class="font-mono font-bold">${a.date}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="switchTab('transcripts'); document.getElementById('officerTranscriptMemberSelect').value='${a.memberId}'; renderOfficerTranscript();" class="rounded-lg border border-slate-300 bg-white hover:bg-slate-100 px-2.5 py-1.5 text-xs font-bold text-slate-800">
+                View Transcript
+              </button>
+              ${canManageCrew ? `
+                <button type="button" onclick="openMemberProfileForOfficer('${a.memberId}')" class="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 text-xs font-bold">
+                  Update Dates
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     function renderOfficerInbox() {
+      renderExpirationAlerts();
+
       const list = document.getElementById('officerInboxList');
+      const note = document.getElementById('inboxVisibilityNote');
       if (!list) return;
-      if (state.messages.length === 0) {
+
+      const lead = isLeadAdmin();
+      if (note) {
+        note.textContent = lead
+          ? 'Lead Admin Oversight: You can view and reply to all crew messages, including messages addressed to Assistant Officers.'
+          : 'Showing messages sent to All Training Officers or directly to you.';
+      }
+
+      const visibleMessages = getVisibleOfficerMessages();
+      if (visibleMessages.length === 0) {
         list.innerHTML = '<div class="rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600">Inbox is empty.</div>';
         return;
       }
-      list.innerHTML = state.messages.map(m => `
-        <div class="rounded-xl border border-slate-200 p-4 bg-white">
-          <div class="text-xs font-extrabold text-slate-700">${m.memberName} • ${m.timestamp}</div>
-          <div class="text-sm text-slate-900 mt-1">${m.text}</div>
-        </div>
-      `).join('');
+
+      list.innerHTML = visibleMessages.map(m => {
+        const repliesHtml = (m.replies || []).map(r => `
+          <div class="mt-2 ml-3 rounded-lg bg-blue-50 border border-blue-200 p-2.5">
+            <div class="text-[11px] font-extrabold text-blue-900">Reply by ${r.senderName} • ${r.timestamp}</div>
+            <div class="text-xs sm:text-sm text-slate-900 mt-0.5">${r.text}</div>
+          </div>
+        `).join('');
+
+        return `
+          <div class="rounded-xl border border-slate-200 p-4 bg-white space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="text-xs font-extrabold text-slate-800">${m.memberName} • <span class="font-semibold text-slate-500">${m.timestamp}</span></div>
+              <span class="rounded-full bg-indigo-50 text-indigo-900 border border-indigo-200 px-2.5 py-0.5 text-[11px] font-extrabold">
+                To: ${m.recipientName || 'All Training Officers'}
+              </span>
+            </div>
+            <div class="text-sm text-slate-900">${m.text}</div>
+            ${repliesHtml}
+            <form onsubmit="replyToMemberMessage(event, '${m.id}')" class="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-100">
+              <input id="replyInput-${m.id}" type="text" required placeholder="Write a reply to ${m.memberName}..." class="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs sm:text-sm" />
+              <button type="submit" class="rounded-lg bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-1.5 text-xs font-bold">
+                Send Reply
+              </button>
+            </form>
+          </div>
+        `;
+      }).join('');
     }
 
     function exportBackupJson() {
