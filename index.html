@@ -549,6 +549,21 @@
           </button>
         </div>
 
+        <!-- Merge Duplicate Member Profiles Tool -->
+        <div class="rounded-xl bg-amber-50 border border-amber-200 p-3.5 mb-5 flex flex-wrap items-end gap-3 text-xs">
+          <div class="flex-1 min-w-[200px]">
+            <label for="mergeSourceMemberSelect" class="block font-extrabold uppercase text-amber-950 mb-1">Duplicate Profile to Merge &amp; Remove</label>
+            <select id="mergeSourceMemberSelect" class="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900"></select>
+          </div>
+          <div class="flex-1 min-w-[200px]">
+            <label for="mergeTargetMemberSelect" class="block font-extrabold uppercase text-amber-950 mb-1">Primary Profile to Keep (Receives All Trainings)</label>
+            <select id="mergeTargetMemberSelect" class="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900"></select>
+          </div>
+          <button type="button" onclick="mergeDuplicateMembers()" class="rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-extrabold px-4 py-2 text-xs sm:text-sm shadow">
+            Merge Profiles &amp; Transcripts
+          </button>
+        </div>
+
         <!-- Add Active or Former Member Form -->
         <form onsubmit="addCrewMember(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 mb-5">
           <input id="newMemberName" type="text" required placeholder="Last, First Name" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm" />
@@ -962,10 +977,106 @@
         endorsements: ['AHA BLS', 'Wildland EMS']
       },
       {
+        id: 'm-backus',
+        name: 'Backus, Colton',
+        level: 'EMT',
+        regNum: 'MT-EMT-3018',
+        cutoff: '2026-03-31',
+        recertDue: '2026-06-30',
+        blsExp: '2027-02-19',
+        pin: '1234',
+        status: 'active',
+        endorsements: ['AHA BLS']
+      },
+      {
+        id: 'm-chaffin',
+        name: 'Chaffin, Charlie',
+        level: 'EMR',
+        regNum: 'MT-EMR-4012',
+        cutoff: '2026-03-31',
+        recertDue: '2026-06-30',
+        blsExp: '2027-02-19',
+        pin: '1234',
+        status: 'active',
+        endorsements: ['AHA BLS', 'Driver / Operator']
+      },
+      {
+        id: 'm-depee',
+        name: 'DePee, Justin',
+        level: 'EMT',
+        regNum: 'MT-EMT-3025',
+        cutoff: '2026-03-31',
+        recertDue: '2026-06-30',
+        blsExp: '2027-02-19',
+        pin: '1234',
+        status: 'active',
+        endorsements: ['AHA BLS']
+      },
+      {
+        id: 'm-evans',
+        name: 'Evans, Tyler',
+        level: 'EMT',
+        regNum: 'MT-EMT-3031',
+        cutoff: '2026-03-31',
+        recertDue: '2026-06-30',
+        blsExp: '2027-02-19',
+        pin: '1234',
+        status: 'active',
+        endorsements: ['AHA BLS']
+      },
+      {
+        id: 'm-hansen',
+        name: 'Hansen, Cody',
+        level: 'EMT',
+        regNum: 'MT-EMT-3039',
+        cutoff: '2026-03-31',
+        recertDue: '2026-06-30',
+        blsExp: '2027-02-19',
+        pin: '1234',
+        status: 'active',
+        endorsements: ['AHA BLS']
+      },
+      {
+        id: 'm-keller',
+        name: 'Keller, Travis',
+        level: 'EMR',
+        regNum: 'MT-EMR-4025',
+        cutoff: '2026-03-31',
+        recertDue: '2026-06-30',
+        blsExp: '2027-02-19',
+        pin: '1234',
+        status: 'active',
+        endorsements: ['AHA BLS']
+      },
+      {
         id: 'm-mcmurray',
         name: 'McMurray, Kyra',
         level: 'EMT',
         regNum: 'MT-EMT-3044',
+        cutoff: '2026-03-31',
+        recertDue: '2026-06-30',
+        blsExp: '2027-02-19',
+        pin: '1234',
+        status: 'active',
+        endorsements: ['AHA BLS']
+      },
+      {
+        id: 'm-miller',
+        name: 'Miller, Garret',
+        level: 'EMT',
+        regNum: 'MT-EMT-3052',
+        cutoff: '2026-03-31',
+        recertDue: '2026-06-30',
+        blsExp: '2027-02-19',
+        pin: '1234',
+        status: 'active',
+        endorsements: ['AHA BLS']
+      },
+      {
+        id: 'm-nelson',
+        name: 'Nelson, Tanner',
+        level: 'EMR',
+        regNum: 'MT-EMR-4033',
         cutoff: '2026-03-31',
         recertDue: '2026-06-30',
         blsExp: '2027-02-19',
@@ -1011,6 +1122,30 @@
         endorsements: ['EMS Instructor', 'ACLS', 'PALS', 'AHA BLS']
       },
       {
+        id: 'm-schmidt',
+        name: 'Schmidt, Ryan',
+        level: 'EMT',
+        regNum: 'MT-EMT-3105',
+        cutoff: '2026-03-31',
+        recertDue: '2026-06-30',
+        blsExp: '2027-02-19',
+        pin: '1234',
+        status: 'active',
+        endorsements: ['AHA BLS']
+      },
+      {
+        id: 'm-wick-d',
+        name: 'Wick, Dylan',
+        level: 'EMT',
+        regNum: 'MT-EMT-3115',
+        cutoff: '2026-03-31',
+        recertDue: '2026-06-30',
+        blsExp: '2027-02-19',
+        pin: '1234',
+        status: 'active',
+        endorsements: ['AHA BLS', 'CPR Instructor']
+      },
+      {
         id: 'm-wick-r',
         name: 'Wick, Rachel',
         level: 'EMT',
@@ -1051,9 +1186,26 @@
         scope: 'department',
         peds: true,
         instructors: 'Roth, M.; Wick, D.',
-        attendees: ['Ashford, William', 'Burhenn, Jessica', 'McMurray, Kyra', 'Posey, Brian', 'Roth, Matthew S', 'Wick, Bekah', 'Wick, Rachel'],
+        attendees: ['Ashford, William', 'Backus, Colton', 'Burhenn, Jessica', 'Chaffin, Charlie', 'DePee, Justin', 'Evans, Tyler', 'Hansen, Cody', 'Keller, Travis', 'McMurray, Kyra', 'Miller, Garret', 'Nelson, Tanner', 'Posey, Brian', 'Roth, Matthew S', 'Schmidt, Ryan', 'Wick, Bekah', 'Wick, Dylan', 'Wick, Rachel'],
         heldAttendees: ['Wick, Bekah'],
         domains: { airway: 0.5, cardio: 1.5, trauma: 0, medical: 0, ops: 0 },
+        nremtUploaded: false,
+        rosterFrontImg: '',
+        rosterBackImg: ''
+      },
+      {
+        id: 's-2026-0205-trauma',
+        date: '2026-02-05',
+        hours: 2.5,
+        title: 'Trauma Triage, Hemorrhage Control & LZ Operations',
+        desc: 'Tourniquet application, pelvic binder placement, and helicopter landing zone safety',
+        source: 'FRFD Station 1 Drill',
+        scope: 'department',
+        peds: false,
+        instructors: 'Burhenn, Jessica',
+        attendees: ['Ashford, William', 'Backus, Colton', 'Burhenn, Jessica', 'Chaffin, Charlie', 'DePee, Justin', 'McMurray, Kyra', 'Posey, Brian', 'Roth, Matthew S', 'Test Provider, Demo', 'Wick, Bekah', 'Wick, Dylan'],
+        heldAttendees: ['Wick, Bekah'],
+        domains: { airway: 0, cardio: 0, trauma: 1.5, medical: 0, ops: 1.0 },
         nremtUploaded: false,
         rosterFrontImg: '',
         rosterBackImg: ''
@@ -1068,7 +1220,7 @@
         scope: 'department',
         peds: true,
         instructors: 'Roth, Matthew',
-        attendees: ['Ashford, William', 'Burhenn, Jessica', 'Gollihugh, G.', 'Roth, Matthew S', 'Wick, Bekah'],
+        attendees: ['Ashford, William', 'Burhenn, Jessica', 'Evans, Tyler', 'Gollihugh, G.', 'Hansen, Cody', 'McMurray, Kyra', 'Miller, Garret', 'Posey, Brian', 'Roth, Matthew S', 'Wick, Bekah', 'Wick, Rachel'],
         heldAttendees: ['Wick, Bekah'],
         domains: { airway: 2.0, cardio: 0, trauma: 0, medical: 0, ops: 0 },
         nremtUploaded: false,
@@ -1076,18 +1228,35 @@
         rosterBackImg: ''
       },
       {
-        id: 's-test-demo-1',
-        date: '2026-02-05',
-        hours: 2.5,
-        title: 'Trauma Triage, Hemorrhage Control & LZ Operations',
-        desc: 'Tourniquet application, pelvic binder placement, and helicopter landing zone safety',
-        source: 'FRFD Demo Drill',
+        id: 's-2026-0108-cardio',
+        date: '2026-01-08',
+        hours: 2.0,
+        title: 'Acute Coronary Syndromes, 12-Lead Acquisition & Stroke',
+        desc: 'STEMI recognition, aspirin/nitro protocols, and prehospital stroke alert criteria',
+        source: 'FRFD Station 1 Drill',
         scope: 'department',
         peds: false,
-        instructors: 'Burhenn, Jessica',
-        attendees: ['Test Provider, Demo', 'Burhenn, Jessica', 'Wick, Bekah'],
+        instructors: 'Roth, Matthew S',
+        attendees: ['Ashford, William', 'Backus, Colton', 'Burhenn, Jessica', 'DePee, Justin', 'Keller, Travis', 'McMurray, Kyra', 'Posey, Brian', 'Roth, Matthew S', 'Schmidt, Ryan', 'Wick, Bekah'],
         heldAttendees: ['Wick, Bekah'],
-        domains: { airway: 0, cardio: 0, trauma: 1.5, medical: 0, ops: 1.0 },
+        domains: { airway: 0, cardio: 1.5, trauma: 0, medical: 0.5, ops: 0 },
+        nremtUploaded: false,
+        rosterFrontImg: '',
+        rosterBackImg: ''
+      },
+      {
+        id: 's-2025-1211-peds',
+        date: '2025-12-11',
+        hours: 2.0,
+        title: 'Pediatric Assessment Triangle, Seizures & Fever Emergencies',
+        desc: 'Pediatric dosing tapes, febrile seizures, and respiratory distress recognition',
+        source: 'FRFD Station 1 Drill',
+        scope: 'department',
+        peds: true,
+        instructors: 'Burhenn, Jessica; Roth, Matthew S',
+        attendees: ['Ashford, William', 'Burhenn, Jessica', 'Chaffin, Charlie', 'Evans, Tyler', 'McMurray, Kyra', 'Nelson, Tanner', 'Posey, Brian', 'Roth, Matthew S', 'Wick, Bekah', 'Wick, Rachel'],
+        heldAttendees: ['Wick, Bekah'],
+        domains: { airway: 0.5, cardio: 0, trauma: 0, medical: 1.5, ops: 0 },
         nremtUploaded: false,
         rosterFrontImg: '',
         rosterBackImg: ''
@@ -1102,9 +1271,26 @@
         scope: 'department',
         peds: false,
         instructors: 'Burhenn, Jessica',
-        attendees: ['Ashford, William', 'Burhenn, Jessica', 'McMurray, Kyra', 'Posey, Brian', 'Wick, Bekah'],
+        attendees: ['Ashford, William', 'Backus, Colton', 'Burhenn, Jessica', 'DePee, Justin', 'Hansen, Cody', 'McMurray, Kyra', 'Posey, Brian', 'Wick, Bekah', 'Wick, Dylan'],
         heldAttendees: ['Wick, Bekah'],
         domains: { airway: 0, cardio: 0, trauma: 1.5, medical: 0.5, ops: 0 },
+        nremtUploaded: false,
+        rosterFrontImg: '',
+        rosterBackImg: ''
+      },
+      {
+        id: 's-2025-1016-ops',
+        date: '2025-10-16',
+        hours: 2.0,
+        title: 'MCI Triage (START/JumpSTART), Radio Comms & Scene Safety',
+        desc: 'Mass casualty triage tagging, command structure, and ambulance staging',
+        source: 'FRFD Station 1 Drill',
+        scope: 'department',
+        peds: true,
+        instructors: 'Burhenn, Jessica',
+        attendees: ['Ashford, William', 'Burhenn, Jessica', 'Chaffin, Charlie', 'Keller, Travis', 'McMurray, Kyra', 'Miller, Garret', 'Posey, Brian', 'Roth, Matthew S', 'Schmidt, Ryan', 'Wick, Bekah', 'Wick, Rachel'],
+        heldAttendees: ['Wick, Bekah'],
+        domains: { airway: 0, cardio: 0, trauma: 0.5, medical: 0, ops: 1.5 },
         nremtUploaded: false,
         rosterFrontImg: '',
         rosterBackImg: ''
@@ -1119,9 +1305,43 @@
         scope: 'department',
         peds: false,
         instructors: 'Roth, Matthew S',
-        attendees: ['Burhenn, Jessica', 'Gollihugh, G.', 'Roth, Matthew S', 'Wick, Bekah', 'Wick, Rachel'],
+        attendees: ['Burhenn, Jessica', 'Evans, Tyler', 'Gollihugh, G.', 'Hansen, Cody', 'Roth, Matthew S', 'Wick, Bekah', 'Wick, Rachel'],
         heldAttendees: ['Wick, Bekah'],
         domains: { airway: 0, cardio: 0, trauma: 0, medical: 1.5, ops: 0 },
+        nremtUploaded: false,
+        rosterFrontImg: '',
+        rosterBackImg: ''
+      },
+      {
+        id: 's-2025-0821-ob',
+        date: '2025-08-21',
+        hours: 2.0,
+        title: 'OB / Childbirth Emergencies & Neonatal Resuscitation',
+        desc: 'Normal delivery, breech/cord complications, and newborn warming & BVM ventilation',
+        source: 'FRFD Station 1 Drill',
+        scope: 'department',
+        peds: true,
+        instructors: 'Burhenn, Jessica; Roth, Matthew S',
+        attendees: ['Ashford, William', 'Backus, Colton', 'Burhenn, Jessica', 'DePee, Justin', 'McMurray, Kyra', 'Nelson, Tanner', 'Posey, Brian', 'Roth, Matthew S', 'Wick, Bekah', 'Wick, Dylan'],
+        heldAttendees: ['Wick, Bekah'],
+        domains: { airway: 0.5, cardio: 0.5, trauma: 0, medical: 1.0, ops: 0 },
+        nremtUploaded: false,
+        rosterFrontImg: '',
+        rosterBackImg: ''
+      },
+      {
+        id: 's-2025-0717-env',
+        date: '2025-07-17',
+        hours: 2.0,
+        title: 'Environmental Emergencies: Heat Stroke, Hypothermia & Wildland EMS',
+        desc: 'Active cooling, passive rewarming, dehydration, and backcountry extraction',
+        source: 'FRFD Station 1 Drill',
+        scope: 'department',
+        peds: false,
+        instructors: 'Burhenn, Jessica',
+        attendees: ['Ashford, William', 'Burhenn, Jessica', 'Chaffin, Charlie', 'Keller, Travis', 'Miller, Garret', 'Posey, Brian', 'Schmidt, Ryan', 'Wick, Bekah', 'Wick, Rachel'],
+        heldAttendees: ['Wick, Bekah'],
+        domains: { airway: 0, cardio: 0, trauma: 0.5, medical: 1.0, ops: 0.5 },
         nremtUploaded: false,
         rosterFrontImg: '',
         rosterBackImg: ''
@@ -2715,6 +2935,22 @@
 
       const canManageCrew = hasOfficerPermission('manageCrew');
       const sorted = [...state.members].sort((a, b) => a.name.localeCompare(b.name));
+
+      const mergeSourceSel = document.getElementById('mergeSourceMemberSelect');
+      const mergeTargetSel = document.getElementById('mergeTargetMemberSelect');
+      if (mergeSourceSel && mergeTargetSel) {
+        const optionsHtml = sorted.map(m => {
+          const count = state.sessions.filter(s => (s.attendees || []).some(a => String(a).toLowerCase().trim() === m.name.toLowerCase().trim())).length;
+          return `<option value="${m.id}">${m.name} (${m.level} • ${count} trainings)</option>`;
+        }).join('');
+        const prevSrc = mergeSourceSel.value;
+        const prevTgt = mergeTargetSel.value;
+        mergeSourceSel.innerHTML = '<option value="">Select duplicate profile...</option>' + optionsHtml;
+        mergeTargetSel.innerHTML = '<option value="">Select primary profile to keep...</option>' + optionsHtml;
+        if (prevSrc) mergeSourceSel.value = prevSrc;
+        if (prevTgt) mergeTargetSel.value = prevTgt;
+      }
+
       grid.innerHTML = sorted.map(m => {
         const isFormer = m.status === 'alumni';
         const isOfficer = m.officerRole && m.officerRole !== 'none';
@@ -2805,6 +3041,93 @@
       syncHeaderAndNav();
       renderCrewCards();
       showToast(`${m.name} marked as ${m.status === 'alumni' ? 'Former / Inactive Member' : 'Active Member'}`);
+    }
+
+    function mergeDuplicateMembers() {
+      if (!hasOfficerPermission('manageCrew')) {
+        showToast('Your officer role does not have permission to merge profiles.');
+        return;
+      }
+      const sourceId = document.getElementById('mergeSourceMemberSelect')?.value;
+      const targetId = document.getElementById('mergeTargetMemberSelect')?.value;
+      if (!sourceId || !targetId) {
+        showToast('Please choose both the duplicate profile and the primary profile to keep.');
+        return;
+      }
+      if (sourceId === targetId) {
+        showToast('Please select two different member profiles to merge.');
+        return;
+      }
+
+      const source = state.members.find(m => m.id === sourceId);
+      const target = state.members.find(m => m.id === targetId);
+      if (!source || !target) return;
+
+      const srcNorm = source.name.toLowerCase().trim();
+      const tgtNorm = target.name.toLowerCase().trim();
+      let movedSessions = 0;
+
+      // Move all session attendance & holds from duplicate name into primary name
+      state.sessions.forEach(s => {
+        const attendees = Array.isArray(s.attendees) ? s.attendees : [];
+        const hasSrc = attendees.some(a => String(a).toLowerCase().trim() === srcNorm);
+        if (hasSrc) {
+          const withoutSrc = attendees.filter(a => String(a).toLowerCase().trim() !== srcNorm);
+          if (!withoutSrc.some(a => String(a).toLowerCase().trim() === tgtNorm)) {
+            withoutSrc.push(target.name);
+          }
+          s.attendees = withoutSrc;
+          movedSessions++;
+        }
+
+        const holds = Array.isArray(s.heldAttendees) ? s.heldAttendees : [];
+        const heldSrc = holds.some(h => String(h).toLowerCase().trim() === srcNorm);
+        if (heldSrc) {
+          const withoutHeldSrc = holds.filter(h => String(h).toLowerCase().trim() !== srcNorm);
+          if (!withoutHeldSrc.some(h => String(h).toLowerCase().trim() === tgtNorm)) {
+            withoutHeldSrc.push(target.name);
+          }
+          s.heldAttendees = withoutHeldSrc;
+        }
+        s.heldAttendees = applyAutoHoldDefaults(s.attendees, s.heldAttendees || []);
+      });
+
+      // Transfer pending/approved CE submissions & messages
+      state.pendingCe.forEach(c => {
+        if (c.memberId === source.id || String(c.memberName || '').toLowerCase().trim() === srcNorm) {
+          c.memberId = target.id;
+          c.memberName = target.name;
+        }
+      });
+      state.messages.forEach(msg => {
+        if (msg.memberId === source.id || String(msg.memberName || '').toLowerCase().trim() === srcNorm) {
+          msg.memberId = target.id;
+          msg.memberName = target.name;
+        }
+      });
+
+      // Combine certifications/endorsements & preserve officer role if source had one
+      const mergedCerts = new Set([...(target.endorsements || []), ...(source.endorsements || [])]);
+      target.endorsements = Array.from(mergedCerts);
+
+      if ((!target.officerRole || target.officerRole === 'none') && source.officerRole && source.officerRole !== 'none') {
+        target.officerRole = source.officerRole;
+        target.officerUser = source.officerUser || target.officerUser;
+        target.officerPin = source.officerPin || target.officerPin;
+        target.permissions = { ...(source.permissions || {}) };
+      }
+
+      if ((!target.regNum || target.regNum === 'PENDING') && source.regNum && source.regNum !== 'PENDING') {
+        target.regNum = source.regNum;
+      }
+
+      // Remove duplicate member record
+      state.members = state.members.filter(m => m.id !== source.id);
+
+      saveToCloud();
+      syncHeaderAndNav();
+      renderCrewCards();
+      showToast(`Merged "${source.name}" into "${target.name}" (${movedSessions} sessions combined)!`);
     }
 
     function openMemberProfileForOfficer(memberId) {
