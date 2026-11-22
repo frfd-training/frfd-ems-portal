@@ -858,6 +858,16 @@
             <label for="ceNotesInput" class="block text-xs font-bold uppercase text-slate-700 mb-1">Certificate / Provider Notes</label>
             <textarea id="ceNotesInput" rows="2" placeholder="CAPCE ID, training provider, or certificate notes..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm"></textarea>
           </div>
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 space-y-2">
+            <label for="ceProofFileInput" class="block text-xs font-extrabold uppercase text-slate-800">
+              Scan / Upload Certificate or Signed Roster (Photo or PDF)
+            </label>
+            <p class="text-[11px] text-slate-500">
+              Attach a photo, phone scan, or PDF of your completion certificate or signed class roster for Training Officer verification.
+            </p>
+            <input id="ceProofFileInput" type="file" accept="image/*,application/pdf" onchange="handleMemberCeProofUpload(event)" class="text-xs" />
+            <div id="memberCeProofPreview" class="pt-1"></div>
+          </div>
           <button type="submit" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 text-sm font-bold">
             Submit CE for Approval
           </button>
@@ -1080,6 +1090,7 @@
     let hideIndividualRosters = false;
     let selectedSessionIds = new Set();
     let draftRosterImages = { front: '', back: '' };
+    let draftMemberCeProof = { dataUrl: '', fileName: '' };
     let lastSuggestedDomains = null;
     let currentTourStep = 0;
 
@@ -1361,11 +1372,12 @@
         const full = m.name.toLowerCase();
         const last = full.split(',')[0].trim();
         const reg = String(m.regNum || '').toLowerCase();
-        return (full === query || last === query || reg === query) && String(m.pin || '1234') === pin;
+        const customLogin = String(m.loginId || '').toLowerCase();
+        return (full === query || last === query || reg === query || (customLogin && customLogin === query)) && String(m.pin || '1234') === pin;
       });
 
       if (!member) {
-        showToast('Member not found or PIN incorrect. Check your Last Name / ID and PIN.');
+        showToast('Member not found or PIN incorrect. Check your Last Name / Login ID and PIN.');
         return;
       }
 
@@ -2192,12 +2204,19 @@
         return;
       }
       const canApprove = hasOfficerPermission('approveCe');
-      container.innerHTML = list.map(item => `
+      container.innerHTML = list.map(item => {
+        const proofHtml = item.proofDataUrl
+          ? (item.proofDataUrl.startsWith('data:application/pdf')
+              ? `<div class="mt-1.5"><a href="${item.proofDataUrl}" download="${item.proofFileName || 'CE_Certificate.pdf'}" class="inline-flex items-center gap-1 rounded bg-indigo-50 border border-indigo-200 px-2.5 py-1 text-[11px] font-bold text-indigo-900">Download Attached PDF (${item.proofFileName || 'Certificate.pdf'})</a></div>`
+              : `<div class="mt-2"><img src="${item.proofDataUrl}" alt="Submitted Certificate" class="h-24 rounded-lg border border-slate-300 object-cover" /></div>`)
+          : '<div class="text-[11px] italic text-slate-400 mt-0.5">No certificate image/PDF attached</div>';
+        return `
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div class="font-extrabold text-slate-900 text-sm">${item.title} <span class="text-blue-700">(${Number(item.hours || 0).toFixed(2)} hrs)</span></div>
             <div class="text-xs text-slate-600">Submitted by <span class="font-bold">${item.memberName}</span> • Date: ${item.date} • Domain: ${item.domain}</div>
             ${item.notes ? `<div class="text-xs text-slate-500 mt-0.5">${item.notes}</div>` : ''}
+            ${proofHtml}
           </div>
           <div class="flex items-center gap-2">
             ${item.status === 'pending' && canApprove ? `
@@ -2206,7 +2225,8 @@
             ` : `<span class="rounded-full px-3 py-1 text-xs font-extrabold uppercase ${item.status === 'approved' ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-200 text-slate-800'}">${item.status}</span>`}
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function reviewCeSubmission(id, decision) {
@@ -2229,6 +2249,7 @@
           instructors: 'External Provider',
           attendees: [item.memberName],
           heldMembers: item.memberName === 'Wick, Bekah' ? ['Wick, Bekah'] : [],
+          rosterFront: (item.proofDataUrl && !item.proofDataUrl.startsWith('data:application/pdf')) ? item.proofDataUrl : '',
           domains
         });
       }
@@ -2381,15 +2402,16 @@
             </span>
           </div>
           <div class="text-xs text-slate-700 space-y-0.5">
+            <div><span class="font-bold">Login ID:</span> <span class="font-mono font-bold text-blue-900">${m.loginId || m.name.split(',')[0].trim()}</span> <span class="text-slate-500">(or ${m.regNum || m.name})</span></div>
+            <div><span class="font-bold">Member PIN:</span> <span class="font-mono font-bold">${m.pin || '1234'}</span></div>
             <div><span class="font-bold">Recert Due:</span> ${m.recertDue || '—'}</div>
             <div><span class="font-bold">BLS CPR Exp:</span> ${m.blsExp || '<span class="text-amber-700 font-bold">Missing</span>'} ${m.blsCardImage ? '• <span class="text-emerald-700 font-bold">Card Uploaded ✓</span>' : ''}</div>
-            <div><span class="font-bold">Member PIN:</span> <span class="font-mono">${m.pin || '1234'}</span></div>
           </div>
           <div class="flex flex-wrap gap-1">
             ${(m.endorsements || []).map(e => `<span class="rounded bg-white border border-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700">${e}</span>`).join('')}
           </div>
           <div class="pt-2 border-t border-slate-200 flex flex-wrap gap-1.5">
-            <button type="button" onclick="openMemberProfileForOfficer('${m.id}')" class="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 text-xs font-bold">Edit Profile &amp; Certs</button>
+            <button type="button" onclick="openMemberProfileForOfficer('${m.id}')" class="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 text-xs font-bold">Edit Login, PIN &amp; Certs</button>
             ${canEdit ? `<button type="button" onclick="toggleMemberAlumniStatus('${m.id}')" class="rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 px-2.5 py-1 text-xs font-bold">${m.alumni ? 'Set Active' : 'Set Inactive'}</button>` : ''}
           </div>
         </div>
@@ -2764,37 +2786,75 @@
     }
 
     function replyToMemberMessage(msgId) {
-      const msg = (state.messages || []).find(m => m.id === msgId);
       const inp = document.getElementById(`replyInput-${msgId}`);
-      if (!msg || !inp || !inp.value.trim()) return;
+      if (!inp || !inp.value.trim()) return;
+      const msg = (state.messages || []).find(m => m.id === msgId);
+      if (!msg) return;
       msg.reply = inp.value.trim();
       saveToCloud();
       renderOfficerInbox();
-      showToast('Reply sent to member.');
+      showToast('Reply sent to crew member.');
     }
 
     function renderMemberDrills() {
       const container = document.getElementById('memberDrillsContainer');
       const m = getCurrentMember();
       if (!container || !m) return;
+
       const drills = (state.sessions || [])
-        .filter(s => s.scope === 'department')
+        .filter(s => s.scope !== 'independent')
         .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+
+      if (!drills.length) {
+        container.innerHTML = '<div class="rounded-xl bg-slate-50 border border-slate-200 p-6 text-center text-xs sm:text-sm font-semibold text-slate-500">No department trainings recorded yet.</div>';
+        return;
+      }
 
       container.innerHTML = drills.map(s => {
         const attended = (s.attendees || []).includes(m.name);
+        const d = s.domains || {};
+        const domTags = [];
+        if (Number(d.airway) > 0) domTags.push(`<span class="rounded bg-sky-100 text-sky-900 px-2 py-0.5 text-[11px] font-bold">Airway: ${d.airway}</span>`);
+        if (Number(d.cardio) > 0) domTags.push(`<span class="rounded bg-rose-100 text-rose-900 px-2 py-0.5 text-[11px] font-bold">Cardio: ${d.cardio}</span>`);
+        if (Number(d.trauma) > 0) domTags.push(`<span class="rounded bg-orange-100 text-orange-900 px-2 py-0.5 text-[11px] font-bold">Trauma: ${d.trauma}</span>`);
+        if (Number(d.medical) > 0) domTags.push(`<span class="rounded bg-purple-100 text-purple-900 px-2 py-0.5 text-[11px] font-bold">Medical: ${d.medical}</span>`);
+        if (Number(d.ops) > 0) domTags.push(`<span class="rounded bg-emerald-100 text-emerald-900 px-2 py-0.5 text-[11px] font-bold">Ops: ${d.ops}</span>`);
+        if (s.peds) domTags.push('<span class="rounded bg-amber-200 text-amber-950 px-2 py-0.5 text-[11px] font-black">PEDS</span>');
+
         return `
           <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div class="font-extrabold text-slate-900 text-sm">${s.date} — ${s.title}</div>
-              <div class="text-xs text-slate-600">${Number(s.hours || 0).toFixed(2)} hrs • Instructor: ${s.instructors || '—'}</div>
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="rounded bg-slate-900 text-white px-2 py-0.5 text-xs font-extrabold">${s.date}</span>
+                <span class="rounded bg-blue-100 text-blue-900 px-2 py-0.5 text-xs font-extrabold">${Number(s.hours || 0).toFixed(2)} hrs</span>
+                <span class="font-black text-slate-900 text-sm">${s.title}</span>
+              </div>
+              <div class="text-xs text-slate-600">${s.desc || ''} • Instructor: <span class="font-bold">${s.instructors || '—'}</span></div>
+              <div class="flex flex-wrap gap-1 pt-0.5">${domTags.join('')}</div>
             </div>
-            <span class="rounded-full px-3 py-1 text-xs font-extrabold ${attended ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-200 text-slate-600'}">
+            <span class="rounded-full px-3 py-1 text-xs font-extrabold ${attended ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-slate-200 text-slate-600'}">
               ${attended ? 'Attended ✓' : 'Not on Roster'}
             </span>
           </div>
         `;
       }).join('');
+    }
+
+    function handleMemberCeProofUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        draftMemberCeProof = { dataUrl: reader.result, fileName: file.name };
+        const prev = document.getElementById('memberCeProofPreview');
+        if (prev) {
+          prev.innerHTML = file.type === 'application/pdf'
+            ? `<div class="text-xs font-bold text-emerald-800">Attached PDF: ${file.name} ✓</div>`
+            : `<img src="${reader.result}" alt="Certificate preview" class="h-28 rounded-xl border border-slate-300 object-cover" />`;
+        }
+        showToast('Certificate / roster scan attached.');
+      };
+      reader.readAsDataURL(file);
     }
 
     function submitMemberCe(event) {
@@ -2810,11 +2870,17 @@
         hours: Number(document.getElementById('ceHoursInput').value || 0),
         domain: document.getElementById('ceDomainSelect').value,
         notes: document.getElementById('ceNotesInput').value.trim(),
+        proofDataUrl: draftMemberCeProof.dataUrl || '',
+        proofFileName: draftMemberCeProof.fileName || '',
         status: 'pending'
       });
       event.target.reset();
+      draftMemberCeProof = { dataUrl: '', fileName: '' };
+      const prev = document.getElementById('memberCeProofPreview');
+      if (prev) prev.innerHTML = '';
       saveToCloud();
-      showToast('Outside CE submitted for Training Officer review.');
+      syncHeaderAndNav();
+      showToast('Outside CE & certificate submitted for Training Officer review.');
       switchTab('myTranscript');
     }
 
@@ -2824,16 +2890,34 @@
       if (!container || !m) return;
 
       const missingBls = !m.blsExp || !m.blsCardImage;
+      const defaultLastName = m.name.split(',')[0].trim();
       container.innerHTML = `
         <div class="border-b border-slate-200 pb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 class="text-xl font-black text-slate-900">Profile &amp; BLS CPR Verification</h2>
+            <h2 class="text-xl font-black text-slate-900">Profile, Login ID &amp; BLS CPR Verification</h2>
             <p class="text-xs sm:text-sm text-slate-500">${m.name} • ${m.level} (${m.regNum || 'FRFD'})</p>
           </div>
           ${missingBls ? '<span class="rounded-full bg-amber-100 text-amber-950 border border-amber-300 px-3 py-1 text-xs font-extrabold">BLS Date &amp; Card Upload Needed</span>' : '<span class="rounded-full bg-emerald-100 text-emerald-900 px-3 py-1 text-xs font-extrabold">BLS Verified ✓</span>'}
         </div>
 
         <form onsubmit="saveMemberProfile(event)" class="space-y-4">
+          <div class="rounded-xl bg-blue-50/70 border border-blue-200 p-4 space-y-3">
+            <div class="text-xs font-extrabold uppercase text-blue-950">Portal Sign-In Credentials</div>
+            <p class="text-xs text-slate-600">
+              You can sign in using your Last Name (<span class="font-mono font-bold">${defaultLastName}</span>), NREMT/State ID (<span class="font-mono font-bold">${m.regNum || '—'}</span>), or your Custom Login ID below.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Custom Portal Login ID</label>
+                <input id="profLoginId" type="text" value="${m.loginId || defaultLastName}" placeholder="e.g. ${defaultLastName}" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-mono" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Personal Portal PIN</label>
+                <input id="profPin" type="text" maxlength="8" value="${m.pin || '1234'}" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-mono" />
+              </div>
+            </div>
+          </div>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-bold uppercase text-slate-700 mb-1">NREMT / State License Renewal Date</label>
@@ -2857,13 +2941,8 @@
             </div>
           </div>
 
-          <div class="max-w-xs">
-            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Personal Portal PIN</label>
-            <input id="profPin" type="text" maxlength="8" value="${m.pin || '1234'}" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-mono" />
-          </div>
-
           <button type="submit" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 text-sm font-extrabold shadow">
-            Save Profile &amp; BLS Certification
+            Save Profile, Login ID &amp; BLS Certification
           </button>
         </form>
       `;
@@ -2888,6 +2967,8 @@
       event.preventDefault();
       const m = getCurrentMember();
       if (!m) return;
+      const newLogin = document.getElementById('profLoginId').value.trim();
+      if (newLogin) m.loginId = newLogin;
       const recertVal = document.getElementById('profRecertDue').value;
       if (recertVal) m.recertDue = `${recertVal.slice(0, 4)}-03-31`;
       m.blsExp = document.getElementById('profBlsExp').value;
@@ -2896,7 +2977,7 @@
       saveToCloud();
       renderMemberProfile();
       renderMemberTranscriptView();
-      showToast('Profile and BLS certification saved!');
+      showToast('Profile, Login ID, and BLS certification saved!');
     }
 
     function renderMemberMessages() {
