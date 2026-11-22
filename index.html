@@ -2204,38 +2204,127 @@
         return;
       }
       const canApprove = hasOfficerPermission('approveCe');
+      const domainLabels = {
+        airway: 'Airway',
+        cardio: 'Cardiovascular',
+        trauma: 'Trauma',
+        medical: 'Medical',
+        ops: 'Operations'
+      };
+      const detectSuggestedDomain = (item) => {
+        const txt = `${item.title || ''} ${item.notes || ''}`.toLowerCase();
+        if (/airway|intubat|supraglottic|ventilat|capnograph|respirat/.test(txt)) return 'airway';
+        if (/cardio|cpr|aed|arrest|ecg|12-lead|stemi|stroke|megacode/.test(txt)) return 'cardio';
+        if (/trauma|bleed|tourniquet|hemorrhage|extricat|fracture|splint|triage|mci|phtls|tecc/.test(txt)) return 'trauma';
+        if (/medical|sepsis|diabet|overdose|narcan|tox|psych|ob|pediatric|geriatric/.test(txt)) return 'medical';
+        return 'ops';
+      };
+
       container.innerHTML = list.map(item => {
+        const suggestedDom = detectSuggestedDomain(item);
+        const currentSelectedDom = item.approvedDomain || item.domain || suggestedDom;
+        const mismatch = item.domain && item.domain !== suggestedDom;
+        const pedsDetected = /peds|pediatric|child|infant|neonat/.test(`${item.title || ''} ${item.notes || ''}`.toLowerCase());
+
         const proofHtml = item.proofDataUrl
           ? (item.proofDataUrl.startsWith('data:application/pdf')
               ? `<div class="mt-1.5"><a href="${item.proofDataUrl}" download="${item.proofFileName || 'CE_Certificate.pdf'}" class="inline-flex items-center gap-1 rounded bg-indigo-50 border border-indigo-200 px-2.5 py-1 text-[11px] font-bold text-indigo-900">Download Attached PDF (${item.proofFileName || 'Certificate.pdf'})</a></div>`
               : `<div class="mt-2"><img src="${item.proofDataUrl}" alt="Submitted Certificate" class="h-24 rounded-lg border border-slate-300 object-cover" /></div>`)
           : '<div class="text-[11px] italic text-slate-400 mt-0.5">No certificate image/PDF attached</div>';
+
         return `
-        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div class="font-extrabold text-slate-900 text-sm">${item.title} <span class="text-blue-700">(${Number(item.hours || 0).toFixed(2)} hrs)</span></div>
-            <div class="text-xs text-slate-600">Submitted by <span class="font-bold">${item.memberName}</span> • Date: ${item.date} • Domain: ${item.domain}</div>
-            ${item.notes ? `<div class="text-xs text-slate-500 mt-0.5">${item.notes}</div>` : ''}
-            ${proofHtml}
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="space-y-1 flex-1 min-w-[240px]">
+              <div class="font-extrabold text-slate-900 text-sm">${item.title} <span class="text-blue-700">(${Number(item.hours || 0).toFixed(2)} hrs)</span></div>
+              <div class="text-xs text-slate-600">Submitted by <span class="font-bold">${item.memberName}</span> • Date: ${item.date} • Member Picked: <span class="font-bold">${domainLabels[item.domain] || item.domain}</span></div>
+              ${item.notes ? `<div class="text-xs text-slate-500">${item.notes}</div>` : ''}
+              <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                <span class="rounded-md bg-sky-100 text-sky-950 border border-sky-300 px-2 py-0.5 text-[11px] font-extrabold">
+                  Suggested NREMT Bucket: ${domainLabels[suggestedDom]}${pedsDetected ? ' + PEDS' : ''}
+                </span>
+                ${mismatch ? `<span class="rounded-md bg-amber-200 text-amber-950 px-2 py-0.5 text-[11px] font-black">Filter Flag: Differs from Member Choice</span>` : '<span class="rounded-md bg-emerald-100 text-emerald-900 px-2 py-0.5 text-[11px] font-bold">Matches Topic Filter ✓</span>'}
+              </div>
+              ${proofHtml}
+            </div>
+            <div class="flex flex-col items-end gap-2">
+              ${item.status === 'pending' && canApprove ? `
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <label class="text-[11px] font-extrabold uppercase text-slate-700">Assign Bucket:</label>
+                  <select onchange="setCeApprovalDomain('${item.id}', this.value)" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-900">
+                    ${Object.entries(domainLabels).map(([k, lbl]) => `<option value="${k}" ${currentSelectedDom === k ? 'selected' : ''}>${lbl}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="reviewCeSubmission('${item.id}', 'approved')" class="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold">Approve &amp; Add to Ledger</button>
+                  <button type="button" onclick="reviewCeSubmission('${item.id}', 'rejected')" class="rounded-lg bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 text-xs font-bold">Reject</button>
+                </div>
+              ` : `<span class="rounded-full px-3 py-1 text-xs font-extrabold uppercase ${item.status === 'approved' ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-200 text-slate-800'}">${item.status}</span>`}
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            ${item.status === 'pending' && canApprove ? `
-              <button type="button" onclick="reviewCeSubmission('${item.id}', 'approved')" class="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold">Approve &amp; Add to Ledger</button>
-              <button type="button" onclick="reviewCeSubmission('${item.id}', 'rejected')" class="rounded-lg bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 text-xs font-bold">Reject</button>
-            ` : `<span class="rounded-full px-3 py-1 text-xs font-extrabold uppercase ${item.status === 'approved' ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-200 text-slate-800'}">${item.status}</span>`}
-          </div>
+          ${canApprove ? `
+            <div class="pt-2 border-t border-slate-200 flex flex-col sm:flex-row gap-2">
+              <input id="ceOfficerNote-${item.id}" type="text" value="${item.officerMessage || ''}" placeholder="Send a note to ${item.memberName} about NREMT bucket placement or approval..." class="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs" />
+              <button type="button" onclick="sendCeOfficerNote('${item.id}')" class="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-bold">
+                Send Note to ${item.memberName.split(',')[0]}
+              </button>
+            </div>
+          ` : ''}
         </div>
       `;
       }).join('');
+    }
+
+    function setCeApprovalDomain(id, domainKey) {
+      const item = (state.pendingCe || []).find(c => c.id === id);
+      if (!item) return;
+      item.approvedDomain = domainKey;
+      const noteInp = document.getElementById(`ceOfficerNote-${id}`);
+      if (noteInp && !noteInp.value.trim() && item.domain && item.domain !== domainKey) {
+        const labels = { airway: 'Airway', cardio: 'Cardiovascular', trauma: 'Trauma', medical: 'Medical', ops: 'Operations' };
+        noteInp.value = `Updated NREMT bucket for "${item.title}" from ${labels[item.domain] || item.domain} to ${labels[domainKey] || domainKey}.`;
+      }
+      saveToCloud();
+    }
+
+    function sendCeOfficerNote(id) {
+      const item = (state.pendingCe || []).find(c => c.id === id);
+      const inp = document.getElementById(`ceOfficerNote-${id}`);
+      if (!item || !inp || !inp.value.trim()) {
+        showToast('Enter a message for the member first.');
+        return;
+      }
+      const text = inp.value.trim();
+      item.officerMessage = text;
+      const off = getCurrentOfficer();
+      state.messages.unshift({
+        id: `msg-ce-${Date.now()}`,
+        memberId: item.memberId,
+        memberName: item.memberName,
+        recipientId: item.memberId,
+        recipientLabel: item.memberName,
+        text: `Training Officer Note (${off ? off.name : 'Officer'}) regarding "${item.title}": ${text}`,
+        reply: text,
+        timestamp: new Date().toLocaleDateString()
+      });
+      saveToCloud();
+      syncHeaderAndNav();
+      showToast(`Sent note to ${item.memberName}.`);
     }
 
     function reviewCeSubmission(id, decision) {
       const item = (state.pendingCe || []).find(c => c.id === id);
       if (!item) return;
       item.status = decision;
+      const finalDomain = item.approvedDomain || item.domain || 'ops';
+      const noteInp = document.getElementById(`ceOfficerNote-${id}`);
+      if (noteInp && noteInp.value.trim()) {
+        item.officerMessage = noteInp.value.trim();
+      }
       if (decision === 'approved') {
         const domains = { airway: 0, cardio: 0, trauma: 0, medical: 0, ops: 0 };
-        if (domains.hasOwnProperty(item.domain)) domains[item.domain] = Number(item.hours || 0);
+        if (domains.hasOwnProperty(finalDomain)) domains[finalDomain] = Number(item.hours || 0);
+        const pedsDetected = /peds|pediatric|child|infant|neonat/.test(`${item.title || ''} ${item.notes || ''}`.toLowerCase());
         state.sessions.unshift({
           id: `s-ce-${Date.now()}`,
           date: item.date,
@@ -2244,7 +2333,7 @@
           desc: item.notes || 'Approved Outside CE',
           source: 'Outside CE Submission',
           scope: 'independent',
-          peds: false,
+          peds: pedsDetected,
           nremtUploaded: false,
           instructors: 'External Provider',
           attendees: [item.memberName],
