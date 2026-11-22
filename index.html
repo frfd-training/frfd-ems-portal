@@ -1941,11 +1941,23 @@
       const badge = document.getElementById('nremtQueueCountBadge');
       if (!container) return;
 
+      // Build a set of date+title signatures that are already marked Added to NREMT or Do Not Add
+      // anywhere in state.sessions so no duplicate or already-added session ever slips into the queue.
+      const getSessionSig = (s) =>
+        `${String(s?.date || '').trim()}|${String(s?.title || '').toLowerCase().replace(/\s+/g, ' ').trim()}`;
+
+      const completedOrExcludedSigs = new Set(
+        (state.sessions || [])
+          .filter(s => s && (s.nremtUploaded || s.nremtExcluded))
+          .map(getSessionSig)
+      );
+
       const seenSignatures = new Set();
       const pending = (state.sessions || [])
         .filter(s => {
           if (!s || s.nremtUploaded || s.nremtExcluded) return false;
-          const sig = `${String(s.date || '').trim()}|${String(s.title || '').toLowerCase().replace(/\s+/g, ' ').trim()}`;
+          const sig = getSessionSig(s);
+          if (completedOrExcludedSigs.has(sig)) return false;
           if (seenSignatures.has(sig)) return false;
           seenSignatures.add(sig);
           return true;
@@ -3221,12 +3233,29 @@
     }
 
     const TOUR_STEPS = [
-      { tab: 'myTranscript', tag: 'Transcript', title: '1. Your Official CE Transcript', body: 'Review all verified Station 1 drills, NCCP domain totals, and your NREMT posting status, or click Print / Save Official PDF anytime.' },
-      { tab: 'myProfile', tag: 'BLS Verification', title: '2. Complete BLS CPR Date & Card Upload', body: 'Open My Profile to enter your AHA BLS / CPR card expiration date and upload a photo or PDF of your certification card.' },
-      { tab: 'submitCe', tag: 'Outside CE', title: '3. Submit Outside Continuing Education', body: 'Completed an outside class or CAPCE course? Submit it here for Training Officer verification.' },
-      { tab: 'calendar', tag: 'Calendar', title: '4. Station 1 Training Calendar', body: 'Check upcoming drills, dates, times, and scheduled NCCP domain hours.' },
-      { tab: 'memberMessages', tag: 'Messages', title: '5. Message Training Officers', body: 'Send a question directly to All Training Officers, Jessica, or Matt and view replies right here.' }
+      { tab: 'myTranscript', targetId: 'memberTranscriptBody', tag: 'Transcript', title: '1. Your Official CE Transcript', body: 'Review all verified Station 1 drills, NCCP domain totals, and your NREMT posting status, or click Print / Save Official PDF anytime.' },
+      { tab: 'myProfile', targetId: 'memberProfileContainer', tag: 'BLS Verification', title: '2. Complete BLS CPR Date & Card Upload', body: 'Open My Profile to enter your AHA BLS / CPR card expiration date and upload a photo or PDF of your certification card.' },
+      { tab: 'submitCe', targetId: 'view-submitCe', tag: 'Outside CE', title: '3. Submit Outside Continuing Education', body: 'Completed an outside class or CAPCE course? Submit it here for Training Officer verification.' },
+      { tab: 'calendar', targetId: 'calendarListContainer', tag: 'Calendar', title: '4. Station 1 Training Calendar', body: 'Check upcoming drills, dates, times, and scheduled NCCP domain hours.' },
+      { tab: 'memberMessages', targetId: 'view-memberMessages', tag: 'Messages', title: '5. Message Training Officers', body: 'Send a question directly to All Training Officers, Jessica, or Matt and view replies right here.' }
     ];
+
+    function clearTourSpotlights() {
+      document.querySelectorAll('.tour-spotlight-target').forEach(el => el.classList.remove('tour-spotlight-target'));
+    }
+
+    function applyTourSpotlightForCurrentStep() {
+      clearTourSpotlights();
+      const modal = document.getElementById('walkthroughModal');
+      if (!modal || modal.classList.contains('hidden')) return;
+      const step = TOUR_STEPS[currentTourStep];
+      if (!step || !step.targetId) return;
+      const target = document.getElementById(step.targetId);
+      if (target) {
+        target.classList.add('tour-spotlight-target');
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
 
     function openWalkthroughModal(stepIdx = 0) {
       currentTourStep = stepIdx;
@@ -3237,7 +3266,7 @@
     function closeWalkthroughModal() {
       const modal = document.getElementById('walkthroughModal');
       if (modal) modal.classList.add('hidden');
-      document.querySelectorAll('.tour-spotlight-target').forEach(el => el.classList.remove('tour-spotlight-target'));
+      clearTourSpotlights();
     }
 
     function stepWalkthrough(delta) {
@@ -3253,7 +3282,10 @@
 
     function openCurrentTourSection() {
       const step = TOUR_STEPS[currentTourStep];
-      if (step && step.tab) switchTab(step.tab);
+      if (step && step.tab) {
+        switchTab(step.tab);
+        setTimeout(applyTourSpotlightForCurrentStep, 40);
+      }
     }
 
     function renderWalkthroughStep() {
