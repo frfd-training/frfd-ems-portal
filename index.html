@@ -1560,6 +1560,10 @@
       return allMsgs.filter(msg => !msg.recipientId || msg.recipientId === 'all' || msg.recipientId === off.id);
     }
 
+    function getUnreadOfficerMessageCount() {
+      return getVisibleOfficerMessages().filter(msg => !msg.readByOfficer && !msg.reply).length;
+    }
+
     function syncHeaderAndNav() {
       const isOfficerView = currentRole === 'officer' && !officerPreviewingMember;
       const offUtil = document.getElementById('officerUtilityGroup');
@@ -1635,7 +1639,7 @@
         const pendingCount = (state.pendingCe || []).filter(c => c.status === 'pending').length;
         const activeCrewCount = (state.members || []).filter(m => !m.alumni && !m.isDemoAccount).length;
         const alertCount = getExpirationAlerts().length;
-        const inboxCount = getVisibleOfficerMessages().length;
+        const inboxCount = getUnreadOfficerMessageCount();
 
         document.getElementById('pendingApprovalsBadge').textContent = pendingCount;
         document.getElementById('crewCountBadge').textContent = activeCrewCount;
@@ -1671,6 +1675,20 @@
       document.querySelectorAll('.portal-view').forEach(sec => sec.classList.add('hidden'));
       const target = document.getElementById(`view-${tabName}`);
       if (target) target.classList.remove('hidden');
+
+      if (tabName === 'inbox' && currentRole === 'officer' && !officerPreviewingMember) {
+        let markedAny = false;
+        getVisibleOfficerMessages().forEach(msg => {
+          if (!msg.readByOfficer) {
+            msg.readByOfficer = true;
+            markedAny = true;
+          }
+        });
+        if (markedAny) {
+          saveToCloud();
+          syncHeaderAndNav();
+        }
+      }
 
       document.querySelectorAll('.nav-tab').forEach(btn => {
         const isMatch = btn.getAttribute('data-tab') === tabName;
@@ -1923,8 +1941,15 @@
       const badge = document.getElementById('nremtQueueCountBadge');
       if (!container) return;
 
+      const seenSignatures = new Set();
       const pending = (state.sessions || [])
-        .filter(s => !s.nremtUploaded && !s.nremtExcluded)
+        .filter(s => {
+          if (!s || s.nremtUploaded || s.nremtExcluded) return false;
+          const sig = `${String(s.date || '').trim()}|${String(s.title || '').toLowerCase().replace(/\s+/g, ' ').trim()}`;
+          if (seenSignatures.has(sig)) return false;
+          seenSignatures.add(sig);
+          return true;
+        })
         .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
 
       if (badge) badge.textContent = `${pending.length} Pending`;
@@ -2243,6 +2268,14 @@
                 <span class="rounded-md bg-sky-100 text-sky-950 border border-sky-300 px-2 py-0.5 text-[11px] font-extrabold">
                   Suggested NREMT Bucket: ${domainLabels[suggestedDom]}${pedsDetected ? ' + PEDS' : ''}
                 </span>
+                ${canApprove && item.status === 'pending' ? `
+                  <label class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700">
+                    <span>Edit Suggested Topic:</span>
+                    <select onchange="editSuggestedCeTopic('${item.id}', this.value)" class="rounded border border-sky-300 bg-white px-1.5 py-0.5 text-[11px] font-extrabold text-sky-950">
+                      ${Object.entries(domainLabels).map(([k, lbl]) => `<option value="${k}" ${suggestedDom === k ? 'selected' : ''}>${lbl}</option>`).join('')}
+                    </select>
+                  </label>
+                ` : ''}
                 ${mismatch ? `<span class="rounded-md bg-amber-200 text-amber-950 px-2 py-0.5 text-[11px] font-black">Filter Flag: Differs from Member Choice</span>` : '<span class="rounded-md bg-emerald-100 text-emerald-900 px-2 py-0.5 text-[11px] font-bold">Matches Topic Filter ✓</span>'}
               </div>
               ${proofHtml}
@@ -2285,6 +2318,21 @@
         noteInp.value = `Updated NREMT bucket for "${item.title}" from ${labels[item.domain] || item.domain} to ${labels[domainKey] || domainKey}.`;
       }
       saveToCloud();
+    }
+
+    function editSuggestedCeTopic(id, newDomainKey) {
+      const item = (state.pendingCe || []).find(c => c.id === id);
+      if (!item) return;
+      item.suggestedDomain = newDomainKey;
+      item.approvedDomain = newDomainKey;
+      const labels = { airway: 'Airway', cardio: 'Cardiovascular', trauma: 'Trauma', medical: 'Medical', ops: 'Operations' };
+      const noteInp = document.getElementById(`ceOfficerNote-${id}`);
+      if (noteInp) {
+        noteInp.value = `Updated suggested NREMT topic for "${item.title}" to ${labels[newDomainKey] || newDomainKey}.`;
+      }
+      saveToCloud();
+      renderApprovals();
+      showToast(`Suggested NREMT topic updated to ${labels[newDomainKey] || newDomainKey}.`);
     }
 
     function sendCeOfficerNote(id) {
@@ -2862,7 +2910,10 @@
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="font-extrabold text-slate-900 text-sm">${msg.memberName}</span>
-            <span class="rounded bg-blue-100 text-blue-900 px-2 py-0.5 text-[11px] font-bold">To: ${msg.recipientLabel || 'All Training Officers'} • ${msg.timestamp || ''}</span>
+            <div class="flex items-center gap-2">
+              <span class="rounded bg-blue-100 text-blue-900 px-2 py-0.5 text-[11px] font-bold">To: ${msg.recipientLabel || 'All Training Officers'} • ${msg.timestamp || ''}</span>
+              <button type="button" onclick="deleteOfficerMessage('${msg.id}')" class="rounded bg-rose-50 hover:bg-rose-100 text-rose-700 px-2 py-0.5 text-[11px] font-bold">Delete</button>
+            </div>
           </div>
           <p class="text-xs sm:text-sm text-slate-800">${msg.text}</p>
           ${msg.reply ? `<div class="rounded-lg bg-white border border-slate-200 p-2.5 text-xs text-slate-700"><span class="font-extrabold text-blue-800">Officer Reply:</span> ${msg.reply}</div>` : ''}
@@ -2874,13 +2925,23 @@
       `).join('');
     }
 
+    function deleteOfficerMessage(msgId) {
+      state.messages = (state.messages || []).filter(m => m.id !== msgId);
+      saveToCloud();
+      syncHeaderAndNav();
+      renderOfficerInbox();
+      showToast('Message deleted.');
+    }
+
     function replyToMemberMessage(msgId) {
       const inp = document.getElementById(`replyInput-${msgId}`);
       if (!inp || !inp.value.trim()) return;
       const msg = (state.messages || []).find(m => m.id === msgId);
       if (!msg) return;
       msg.reply = inp.value.trim();
+      msg.readByOfficer = true;
       saveToCloud();
+      syncHeaderAndNav();
       renderOfficerInbox();
       showToast('Reply sent to crew member.');
     }
